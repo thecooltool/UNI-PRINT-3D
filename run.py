@@ -31,7 +31,7 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 launcher.set_machinekit_ini(config.MACHINEKIT_INI)
 
 if not os.path.isfile(configName):
-    sys.stderr.write('Config file %s does not exist' % configName)
+    sys.stderr.write('Config file %s does not exist\n' % configName)
     sys.exit(1)
 
 startupIniName = 'startup.ini'
