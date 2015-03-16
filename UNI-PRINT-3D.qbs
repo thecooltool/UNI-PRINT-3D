@@ -1,13 +1,13 @@
 import qbs
 
 MachinekitApplication {
-    name: "UNIPRINT-3D"
-    halFiles: ["UNIPRINT-3D.hal",
+    name: "UNI-PRINT-3D"
+    halFiles: ["UNI-PRINT-3D.hal",
                "velocity-extruding.hal"]
-    configFiles: ["UNIPRINT-3D.ini"]
+    configFiles: ["UNI-PRINT-3D.ini"]
     bbioFiles: ["paralell_cape3.bbio"]
     otherFiles: ["tool.tbl", "subroutines"]
     compFiles: ["led_dim.comp", "thermistor_check.comp"]
-    linuxcncIni: "UNIPRINT-3D.ini"
+    linuxcncIni: "UNI-PRINT-3D.ini"
     //display: "thinkpad.local:0.0"
 }
