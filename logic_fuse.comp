@@ -51,10 +51,10 @@ TODO
 license "GPL";
 variable hal_bit_t last_reset = 0;
 variable hal_float_t oldwait = 0.0;
-variable int t_secs = 0;
-variable int t_nsecs = 0;
-variable int c_secs = 0;
-variable int c_nsecs = 0;
+variable long t_secs = 0;
+variable long t_nsecs = 0;
+variable long c_secs = 0;
+variable long c_nsecs = 0;
 variable hal_bit_t triggered = 0;
 variable hal_bit_t timeout = 0;
 ;;
@@ -62,14 +62,14 @@ FUNCTION(_) {
     if (wait != oldwait)
     {
         hal_float_t time;
-        
+
         time = wait;
-        if (time < 0) time = 0; // no negative timeout periods
+        if (time < 0.0) time = 0.0; // no negative timeout periods
         // new timeout, convert to secs/ns
         oldwait = time;
-        t_secs = time;
-        time -= t_secs;
-        t_nsecs = (1e9 * time);
+        t_secs = (long)time;
+        time -= (hal_float_t)t_secs;
+        t_nsecs = (long)(1.0e9 * time);
     }
 
     if (enable)
