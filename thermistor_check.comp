@@ -63,7 +63,7 @@ variable int c_nsecs = 0;
 variable hal_bit_t start = 0;
 ;;
 FUNCTION(_) {
-    float temp_change;
+    hal_float_t temp_change;
     float time;
     
     if (wait != oldwait)
