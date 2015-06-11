@@ -84,25 +84,32 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
 
     # expose timing parameters so we can multiplex them later
     sigBase = 'stepgen-%i' % stepgenIndex
-    dirsetup = hal.newsig('%s-dirsetup' % sigBase, hal.HAL_U32, init=c.find(section, 'DIRSETUP'))
-    dirhold = hal.newsig('%s-dirhold' % sigBase, hal.HAL_U32, init=c.find(section, 'DIRHOLD'))
-    steplen = hal.newsig('%s-steplen' % sigBase, hal.HAL_U32, init=c.find(section, 'STEPLEN'))
-    stepspace = hal.newsig('%s-stepspace' % sigBase, hal.HAL_U32, init=c.find(section, 'STEPSPACE'))
-    scale = hal.newsig('%s-scale' % sigBase, hal.HAL_FLOAT, init=c.find(section, 'SCALE'))
-    maxVel = hal.newsig('%s-max-vel' % sigBase, hal.HAL_FLOAT, init=c.find(section, 'STEPGEN_MAX_VEL'))
-    maxAcc = hal.newsig('%s-max-acc' % sigBase, hal.HAL_FLOAT, init=c.find(section, 'STEPGEN_MAX_ACC'))
-    controlType = hal.newsig('%s-control-type' % sigBase, hal.HAL_FLOAT, init=0)
+    dirsetup = hal.newsig('%s-dirsetup' % sigBase, hal.HAL_U32)
+    dirhold = hal.newsig('%s-dirhold' % sigBase, hal.HAL_U32)
+    steplen = hal.newsig('%s-steplen' % sigBase, hal.HAL_U32)
+    stepspace = hal.newsig('%s-stepspace' % sigBase, hal.HAL_U32)
+    scale = hal.newsig('%s-scale' % sigBase, hal.HAL_FLOAT)
+    maxVel = hal.newsig('%s-max-vel' % sigBase, hal.HAL_FLOAT)
+    maxAcc = hal.newsig('%s-max-acc' % sigBase, hal.HAL_FLOAT)
+    controlType = hal.newsig('%s-control-type' % sigBase, hal.HAL_FLOAT)
 
     hal.Pin('%s.dirsetup' % stepgen).link(dirsetup)
     hal.Pin('%s.dirhold' % stepgen).link(dirhold)
+    dirsetup.set(c.find(section, 'DIRSETUP'))
+    dirhold.set(c.find(section, 'DIRHOLD'))
 
     hal.Pin('%s.steplen' % stepgen).link(steplen)
     hal.Pin('%s.stepspace' % stepgen).link(stepspace)
+    steplen.set(c.find(section, 'STEPLEN'))
+    stepspace.set(c.find(section, 'STEPSPACE'))
 
     hal.Pin('%s.position-scale' % stepgen).link(scale)
+    scale.set(c.find(section, 'SCALE'))
 
     hal.Pin('%s.maxvel' % stepgen).link(maxVel)
     hal.Pin('%s.maxaccel' % stepgen).link(maxAcc)
+    maxVel.set(c.find(section, 'STEPGEN_MAX_VEL'))
+    maxAcc.set(c.find(section, 'STEPGEN_MAX_ACC'))
 
     hal.Pin('%s.control-type' % stepgen).link(controlType)
 
@@ -215,36 +222,26 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     tempPidBias = hal.newsig('%s-temp-pid-bias' % name, hal.HAL_FLOAT)
     tempRangeMin = hal.newsig('%s-temp-range-min' % name, hal.HAL_FLOAT)
     tempRangeMax = hal.newsig('%s-temp-range-max' % name, hal.HAL_FLOAT)
-    noErrorIn1 = hal.newsig('%s-no-error-in1' % name, hal.HAL_BIT)
-    noErrorIn2 = hal.newsig('%s-no-error-in2' % name, hal.HAL_BIT)
+    noErrorIn = hal.newsig('%s-no-error-in' % name, hal.HAL_BIT)
     errorIn = hal.newsig('%s-error-in' % name, hal.HAL_BIT)
 
-    # parameters
-    tempLimitMin.set(c.find(section, 'TEMP_LIMIT_MIN'))
-    tempLimitMax.set(c.find(section, 'TEMP_LIMIT_MAX'))
-    tempStandby.set(c.find(section, 'TEMP_STANDBY'))
-    tempPwmMax.set(c.find(section, 'PWM_MAX'))
-    tempPidBias.set(c.find(section, 'PID_BIAS'))
-    tempPidPgain.set(c.find(section, 'PID_PGAIN'))
-    tempPidIgain.set(c.find(section, 'PID_IGAIN'))
-    tempPidDgain.set(c.find(section, 'PID_DGAIN'))
-    tempPidMaxerrorI.set(c.find(section, 'PID_MAXERRORI'))
-
+    tempPidBiasOut = tempPidBias
     # coolingFan compensation
     if coolingFan:
         tempPidFanBias = hal.newsig('%s-temp-pid-fan-bias' % name, hal.HAL_FLOAT)
+        tempPidBiasOut = hal.newsig('%s-temp-pid-bias-out' % name, hal.HAL_FLOAT)
 
-        scale = rt.newinst('scale', 'scale.%s-temp-pid-fan-bias')
+        scale = rt.newinst('scale', 'scale.%s-temp-pid-fan-bias' % name)
         hal.addf(scale.name, thread)
         scale.pin('in').link('%s.pwm' % coolingFan)
         scale.pin('out').link(tempPidFanBias)
         scale.pin('gain').set(c.find(section, 'FAN_BIAS'))
 
-        sum2 = rt.newinst('sum2', 'sum2.%s-temp-pid-bias')
+        sum2 = rt.newinst('sum2', 'sum2.%s-temp-pid-bias' % name)
         hal.addf(sum2.name, thread)
-        sum2.pin('in0').set(c.find(section, 'PID_BIAS'))
+        sum2.pin('in0').link(tempPidBias)
         sum2.pin('in1').link(tempPidFanBias)
-        sum2.pin('out').link(tempPidBias)
+        sum2.pin('out').link(tempPidBiasOut)
 
     # PID
     pid = rt.newinst('pid', 'pid.%s' % name)
@@ -258,11 +255,11 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     pid.pin('Pgain').link(tempPidPgain)
     pid.pin('Igain').link(tempPidIgain)
     pid.pin('Dgain').link(tempPidDgain)
-    pid.pin('maxerrorI').link(tempMaxerrorI)
+    pid.pin('maxerrorI').link(tempPidMaxerrorI)
 
     # Limit heater PWM to positive values
     # PWM mimics hm2 implementation, which generates output for negative values
-    limit1 = rt.newinst('limit1', 'limit.%s-temp-heaterl')
+    limit1 = rt.newinst('limit1', 'limit.%s-temp-heaterl' % name)
     hal.addf(limit1.name, thread)
     limit1.pin('in').link(tempPidOut)
     limit1.pin('out').link(tempPwm)
@@ -270,20 +267,20 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     limit1.pin('max').link(tempPwmMax)
 
     # Temperature checking
-    sum2 = rt.newinst('sum2', 'sum2.%s-temp-range-pos')
+    sum2 = rt.newinst('sum2', 'sum2.%s-temp-range-pos' % name)
     hal.addf(sum2.name, thread)
     sum2.pin('in0').link(tempSet)
     sum2.pin('in1').set(c.find(section, 'TEMP_RANGE_POS_ERROR'))
-    sum2.pin('out').link(tempRangeMin)
+    sum2.pin('out').link(tempRangeMax)
 
-    sum2 = rt.newinst('sum2', 'sum2.%s-temp-range-neg')
+    sum2 = rt.newinst('sum2', 'sum2.%s-temp-range-neg' % name)
     hal.addf(sum2.name, thread)
     sum2.pin('in0').link(tempSet)
     sum2.pin('in1').set(c.find(section, 'TEMP_RANGE_NEG_ERROR'))
-    sum2.pin('out').link(tempRangeMax)
+    sum2.pin('out').link(tempRangeMin)
 
     #the output of this component will say if measured temperature is in range of set value
-    wcomp = rt.newinst('wcomp', 'wcomp.%s-temp-in-range')
+    wcomp = rt.newinst('wcomp', 'wcomp.%s-temp-in-range' % name)
     hal.addf(wcomp.name, thread)
     wcomp.pin('min').link(tempRangeMin)
     wcomp.pin('max').link(tempRangeMax)
@@ -291,7 +288,7 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     wcomp.pin('out').link(tempInRange)
 
     # limit the output temperature to prevent damage when thermistor is broken/removed
-    wcomp = rt.newinst('wcomp', 'wcomp.%s-temp-in-limit')
+    wcomp = rt.newinst('wcomp', 'wcomp.%s-temp-in-limit' % name)
     hal.addf(wcomp.name, thread)
     wcomp.pin('min').link(tempLimitMin)
     wcomp.pin('max').link(tempLimitMax)
@@ -305,27 +302,23 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     # net e0.temp.in-range_n        => thermistor-check.e0.enable
     # net e0.heaterl                => thermistor-check.e0.pid
     # net e0.therm-ok               <= thermistor-check.e0.no-error
-    tempThermOk.set(True)  # for now disabled
 
     # no error chain
-    and2 = rt.newinst('and2', 'and2.%s-no-error-in' % name)
-    hal.addf(and2.name, thread)
-    and2.pin('in0').link(tempThermOk)
-    and2.pin('in1').link(tempInLimit)
-    and2.pin('out').link(noErrorIn1)
-
-    and2 = rt.newinst('and2', 'and2.%s-no-error-in' % name)
-    hal.addf(and2.name, thread)
-    and2.pin('in0').link(noErrorIn1)
+    and3 = rt.newinst('and', 'and3.%s-no-error-in' % name, pincount=3)
+    hal.addf(and3.name, thread)
+    and3.pin('in0').link(tempThermOk)
+    and3.pin('in1').link(tempInLimit)
     if hardwareOkSignal:
-        and2.pin('in1').link(hardwareOkSignal)
+        and3.pin('in2').link(hardwareOkSignal)
     else:
-        and2.pin('in1').set(True)
-    and2.pin('out').link(noErrorIn2)
+        and3.pin('in2').set(True)
+    and3.pin('out').link(noErrorIn)
+
+    tempThermOk.set(True)  # thermistor checking for now disabled
 
     notComp = rt.newinst('not', 'not.%s-error-in' % name)
     hal.addf(notComp.name, thread)
-    notComp.pin('in').link(noErrorIn2)
+    notComp.pin('in').link(noErrorIn)
     notComp.pin('out').link(errorIn)
 
     logicFuse = rt.newinst('logic_fuse', 'logic-fuse.%s-error' % name)
@@ -333,7 +326,7 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     logicFuse.pin('in').link(errorIn)
     logicFuse.pin('out').link(error)
     logicFuse.pin('wait').set(0.5)  # TODO configure
-    logicFuse.pin('reset').link('estop-error')
+    logicFuse.pin('reset').link('estop-reset')
 
     # active chain
     comp = rt.newinst('comp', 'comp.%s-active' % name)
@@ -359,6 +352,17 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
         comp.pin('out').link('%s-pwm-enable' % hotendFan)
 
         hal.Signal('%s-pwm' % hotendFan).set(1.0)
+
+    # init parameter signals
+    tempLimitMin.set(c.find(section, 'TEMP_LIMIT_MIN'))
+    tempLimitMax.set(c.find(section, 'TEMP_LIMIT_MAX'))
+    tempStandby.set(c.find(section, 'TEMP_STANDBY'))
+    tempPwmMax.set(c.find(section, 'PWM_MAX'))
+    tempPidPgain.set(c.find(section, 'PID_PGAIN'))
+    tempPidIgain.set(c.find(section, 'PID_IGAIN'))
+    tempPidDgain.set(c.find(section, 'PID_DGAIN'))
+    tempPidMaxerrorI.set(c.find(section, 'PID_MAXERRORI'))
+    tempPidBias.set(c.find(section, 'PID_BIAS'))
 
     rcomps.create_temperature_rcomp(name)
     motion.setup_temperature_io(name)
@@ -395,15 +399,18 @@ def setup_light(name, thread):
 
 
 def setup_fan(name, thread):
-    setSig = hal.newsig('%s-set' % name, hal.HAL_FLOAT, init=0.0)
+    setSig = hal.newsig('%s-set' % name, hal.HAL_FLOAT)
     pwmSig = hal.newsig('%s-pwm' % name, hal.HAL_FLOAT)
-    hal.newsig('%s-enable' % name, hal.HAL_FLOAT, init=True)
+    enable = hal.newsig('%s-enable' % name, hal.HAL_FLOAT)
 
-    scale = rt.newcomp('scale', 'scale.%s')
+    scale = rt.newinst('scale', 'scale.%s' % name)
     hal.addf(scale.name, thread)
     scale.pin('in').link(setSig)
     scale.pin('out').link(pwmSig)
     scale.pin('gain').set(1.0 / 255.0)  # 255 steps from motion
+
+    setSig.set(0.0)
+    enable.set(True)
 
     rcomps.create_fan_rcomp(name)
     motion.setup_fan_io(name)
@@ -411,18 +418,18 @@ def setup_fan(name, thread):
 
 def setup_estop(errorSignals, thread):
     # Create estop signal chain
-    estopUser = hal.newsig('estop-user', hal.HAL_BIT)
-    estopReset = hal.newsig('estop-reset', hal.HAL_BIT)
-    estopOut = hal.newsig('estop-out', hal.HAL_BIT)
-    estopIn = hal.newsig('estop-in', hal.HAL_BIT)
-    estopError = hal.newsig('estop-error', hal.HAL_BIT)
+    estopUser = hal.Signal('estop-user', hal.HAL_BIT)
+    estopReset = hal.Signal('estop-reset', hal.HAL_BIT)
+    estopOut = hal.Signal('estop-out', hal.HAL_BIT)
+    estopIn = hal.Signal('estop-in', hal.HAL_BIT)
+    estopError = hal.Signal('estop-error', hal.HAL_BIT)
 
     num = len(errorSignals)
     orComp = rt.newinst('or', 'or%i.estop-error' % num, pincount=num)
     hal.addf(orComp.name, thread)
     for n, sig in enumerate(errorSignals):
         orComp.pin('in%i' % n).link(sig)
-    orComp.link('out').link(estopError)
+    orComp.pin('out').link(estopError)
 
     estopLatch = rt.newinst('estop_latch', 'estop-latch')
     hal.addf(estopLatch.name, thread)
@@ -431,11 +438,11 @@ def setup_estop(errorSignals, thread):
     estopLatch.pin('reset').link(estopReset)
     estopLatch.pin('ok-out').link(estopOut)
 
-    estopUser += 'iocontrol.0.user-enable-out'
-    estopReset += 'iocontrol.0.user-request-enable'
+    estopUser.link('iocontrol.0.user-enable-out')
+    estopReset.link('iocontrol.0.user-request-enable')
 
     # Monitor estop input from hardware
-    estopIn += 'iocontrol.0.emc-enable-in'
+    estopIn.link('iocontrol.0.emc-enable-in')
 
 
 def setup_tool_loopback():
@@ -453,9 +460,9 @@ def init_gantry(axisIndex, joints=2, latching=True):
     rcomps.create_gantry_rcomp(axisIndex=axisIndex)
 
 
-def read_gantry(gantryAxis, thread):
+def gantry_read(gantryAxis, thread):
     hal.addf('gantry.%i.read' % gantryAxis, thread)
 
 
-def write_gantry(gantryAxis, thread):
+def gantry_write(gantryAxis, thread):
     hal.addf('gantry.%i.write' % gantryAxis, thread)

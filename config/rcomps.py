@@ -7,12 +7,12 @@ def create_temperature_rcomp(name, timer=100):
     comp = hal.RemoteComponent('fdm-%s' % name, timer=timer)
     comp.newpin('temp.meas', hal.HAL_FLOAT, hal.HAL_IN, eps=1)
     comp.newpin('temp.set', hal.HAL_FLOAT, hal.HAL_IO)
-    comp.newpin('temp.standy', hal.HAL_FLOAT, hal.HAL_IN)
+    comp.newpin('temp.standby', hal.HAL_FLOAT, hal.HAL_IN)
     comp.newpin('temp.limit.min', hal.HAL_FLOAT, hal.HAL_IN)
     comp.newpin('temp.limit.max', hal.HAL_FLOAT, hal.HAL_IN)
     comp.newpin('temp.in-range', hal.HAL_BIT, hal.HAL_IN)
-    comp.newpin('temp.error', hal.HAL_FLOAT, hal.HAL_IN)
-    comp.newpin('temp.active', hal.HAL_FLOAT, hal.HAL_IN)
+    comp.newpin('error', hal.HAL_BIT, hal.HAL_IN)
+    comp.newpin('active', hal.HAL_BIT, hal.HAL_IN)
     comp.ready()
 
     comp.pin('temp.meas').link('%s-temp-meas' % name)
@@ -52,7 +52,7 @@ def create_ve_jog_rcomp(timer=100):
     comp = hal.RemoteComponent(name, timer=timer)
     comp.newpin('distance', hal.HAL_FLOAT, hal.HAL_IO)
     comp.newpin('velocity', hal.HAL_FLOAT, hal.HAL_IO)
-    comp.newpin('direction', hal.HAL_FLOAT, hal.HAL_IO)
+    comp.newpin('direction', hal.HAL_BIT, hal.HAL_IO)
     comp.newpin('trigger', hal.HAL_BIT, hal.HAL_IO)
     comp.newpin('continous', hal.HAL_BIT, hal.HAL_OUT)
     comp.newpin('dtg', hal.HAL_FLOAT, hal.HAL_IN, eps=1)
@@ -65,7 +65,7 @@ def create_ve_jog_rcomp(timer=100):
     comp.pin('trigger').link('ve-jog-trigger')
     comp.pin('continous').link('ve-jog-continous')
     comp.pin('dtg').link('ve-jog-dtg')
-    comp.pin('max-velocity').set(c.find('AXIS_3', 'MAX_VELOCITY'))  # TODO move to signal
+    comp.pin('max-velocity').link('ve-max-velocity')
 
 
 def create_ve_params_rcomp(timer=100):

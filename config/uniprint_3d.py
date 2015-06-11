@@ -5,12 +5,12 @@ from machinekit import config as c
 import base
 
 
-def read_hardware():
+def hardware_read():
     hal.addf('hpg.capture-position', 'servo-thread')
     hal.addf('bb_gpio.read', 'servo-thread')
 
 
-def write_hardware():
+def hardware_write():
     hal.addf('hpg.update', 'servo-thread')
     hal.addf('bb_gpio.write', 'servo-thread')
 
@@ -192,7 +192,7 @@ def setup_hbp_led(thread):
     ledHbpInfo = hal.newsig('led-hbp-info', hal.HAL_BIT)
 
     # low temp
-    comp = rt.newinst('comp', 'comp.hbp-meas')
+    comp = rt.newinst('comp', 'comp.hbp-info')
     hal.addf(comp.name, thread)
     comp.pin('in0').set(50.0)
     comp.pin('in1').link(tempMeas)
@@ -200,7 +200,7 @@ def setup_hbp_led(thread):
     comp.pin('out').link(ledHbpInfo)
 
     # high temp
-    comp = rt.newinst('comp', 'comp.hbp-meas')
+    comp = rt.newinst('comp', 'comp.hbp-hot')
     hal.addf(comp.name, thread)
     comp.pin('in0').link(tempMeas)
     comp.pin('in1').set(50.0)

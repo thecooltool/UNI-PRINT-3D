@@ -22,8 +22,8 @@ storage.init_storage('storage.ini')
 base.init_gantry(axisIndex=2)
 
 # reading functions
-uniprint_3d.read_hardware()
-base.read_gantry(gantryAxis=2, thread='servo-thread')
+uniprint_3d.hardware_read()
+base.gantry_read(gantryAxis=2, thread='servo-thread')
 hal.addf('motion-command-handler', 'servo-thread')
 
 # Axis-of-motion Specific Configs (not the GUI)
@@ -38,12 +38,18 @@ base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=2,
 base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=3,
             gantry=True, gantryJoint=1)
 # Extruder, velocity controlled
-base.setup_stepper(section='AXIS_4', stepgenIndex=4, velocitySignal='ve-extrude-vel')
+base.setup_stepper(section='AXIS_3', stepgenIndex=4, velocitySignal='ve-extrude-vel')
 # TODO ABP
 
 numFans = int(c.find('FDM', 'NUM_FANS'))
 numExtruders = int(c.find('FDM', 'NUM_EXTRUDERS'))
 numLights = int(c.find('FDM', 'NUM_LIGHTS'))
+
+# Fans
+for i in range(0, numFans):
+    base.setup_fan('f%i' % i, thread='servo-thread')
+for i in range(0, numExtruders):
+    uniprint_3d.setup_exp('exp%i' % i)
 
 # Temperature Signals
 base.create_temperature_control(name='hbp', section='HBP',
@@ -64,12 +70,6 @@ for i in range(0, numLights):
 # HB LED
 uniprint_3d.setup_hbp_led(thread='servo-thread')
 
-# Fans
-for i in range(0, numFans):
-    base.setup_fan('f%i' % i, thread='servo-thread')
-for i in range(0, numExtruders):
-    uniprint_3d.setup_exp('exp%i' % i)
-
 # Standard I/O - EStop, Enables, Limit Switches, Etc
 errorSignals = ['gpio-hw-error', 'pwm-hw-error', 'temp-hw-error',
                 'watchdog-error', 'hbp-error']
@@ -83,12 +83,12 @@ base.setup_probe(thread='servo-thread')
 uniprint_3d.setup_hardware(thread='servo-thread')
 
 # write out functions
-base.read_gantry(gantryAxis=2, thread='servo-thread')
-uniprint_3d.write_hardware()
+base.gantry_write(gantryAxis=2, thread='servo-thread')
+uniprint_3d.hardware_write()
 
 # Storage
 storage.read_storage()
 
 # start haltalk server after everything is initialized
 # else binding the remote components on the UI might fail
-hal.loadusr('haltalk')
+hal.loadusr('haltalk', wait=True)

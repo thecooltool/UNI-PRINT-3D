@@ -1,3 +1,5 @@
+import math
+
 from machinekit import hal
 from machinekit import rtapi as rt
 from machinekit import config as c
@@ -18,7 +20,7 @@ def velocity_jog(thread):
     jogContinous = hal.newsig('ve-jog-continous', hal.HAL_BIT)
     # helper signals
     jogEnable = hal.newsig('ve-jog-enable', hal.HAL_BIT)
-    jogVelocityNeg = hal.newsig('ve-jog-velocity', hal.HAL_FLOAT)
+    jogVelocityNeg = hal.newsig('ve-jog-velocity-neg', hal.HAL_FLOAT)
     jogVelocitySigned = hal.newsig('ve-velocity-signed', hal.HAL_FLOAT)
     jogTime = hal.newsig('ve-jog-time', hal.HAL_FLOAT)
     jogTimeLeft = hal.newsig('ve-jog-time-left', hal.HAL_FLOAT)
@@ -107,6 +109,7 @@ def velocity_extrusion(thread):
     extrudeAccelAdjGain = hal.newsig('ve-extrude-accel-adj-gain', hal.HAL_FLOAT)
     retractVel = hal.newsig('ve-retract-vel', hal.HAL_FLOAT)
     retractLen = hal.newsig('ve-retract-len', hal.HAL_FLOAT)
+    maxVelocity = hal.newsig('ve-max-velocity', hal.HAL_FLOAT)
     # helper signals
     nozzleVelSigned = hal.newsig('ve-nozzle-vel-signed', hal.HAL_FLOAT)
     nozzleVel = hal.newsig('ve-nozzle-vel', hal.HAL_FLOAT)
@@ -124,14 +127,6 @@ def velocity_extrusion(thread):
     retract = hal.newsig('ve-retract', hal.HAL_BIT)
     extrudeVel = hal.newsig('ve-extrude-vel', hal.HAL_FLOAT)
     baseVel = hal.newsig('ve-base-vel', hal.HAL_FLOAT)
-
-    # default values
-    retractLen.set(c.find('EXTRUDER_0', 'RETRACT_LEN'))
-    retractVel.set(c.find('EXTRUDER_0', 'RETRACT_VEL'))
-    filamentDia.set(c.find('EXTRUDER_0', 'FILAMENT_DIA'))
-    extrudeAccelAdjGain.set(0.05)
-    extrudeScale.set(1.0)
-    baseVel.set(0.0)  # used for jogging
 
     # take all the actual speeds from the axes and calculate resulting speed.
     xvel += 'axis.0.joint-vel-cmd'
@@ -254,6 +249,16 @@ def velocity_extrusion(thread):
     mux4.pin('out').link(extrudeVel)
     mux4.pin('sel0').link(retract)
     mux4.pin('sel1').link(extruderEn)
+
+    # default values
+    retractLen.set(c.find('EXTRUDER_0', 'RETRACT_LEN'))
+    retractVel.set(c.find('EXTRUDER_0', 'RETRACT_VEL'))
+    filamentDia.set(c.find('EXTRUDER_0', 'FILAMENT_DIA'))
+    maxVelocity.set(c.find('EXTRUDER_0', 'MAX_VELOCITY'))  # TODO shoud be on a per Extruder base
+    extrudeAccelAdjGain.set(0.05)
+    extrudeScale.set(1.0)
+    if baseVel.writers < 1:  # can only write when jogging not configured
+        baseVel.set(0.0)
 
     rcomps.create_ve_params_rcomp()
     storage.setup_ve_storage()
