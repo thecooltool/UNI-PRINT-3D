@@ -69,13 +69,14 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
                   stepgenType='hpg.stepgen', gantry=False,
                   gantryJoint=0, velocitySignal=None, thread=None):
     stepgen = '%s.%02i' % (stepgenType, stepgenIndex)
-    axis = 'axis.%i' % axisIndex
-    hasMotionAxis = axisIndex and (not gantry or gantryJoint == 0)
+    if axisIndex is not None:
+        axis = 'axis.%i' % axisIndex
+    hasMotionAxis = (axisIndex is not None) and (not gantry or gantryJoint == 0)
     velocityControlled = velocitySignal is not None
 
     # axis enable chain
     enableIndex = axisIndex
-    if not axisIndex:
+    if axisIndex is None:
         enableIndex = 0  # use motor enable signal
     enable = hal.Signal('emcmot-%i-enable' % enableIndex, hal.HAL_BIT)
     if hasMotionAxis:
@@ -91,7 +92,7 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
     scale = hal.newsig('%s-scale' % sigBase, hal.HAL_FLOAT)
     maxVel = hal.newsig('%s-max-vel' % sigBase, hal.HAL_FLOAT)
     maxAcc = hal.newsig('%s-max-acc' % sigBase, hal.HAL_FLOAT)
-    controlType = hal.newsig('%s-control-type' % sigBase, hal.HAL_FLOAT)
+    controlType = hal.newsig('%s-control-type' % sigBase, hal.HAL_BIT)
 
     hal.Pin('%s.dirsetup' % stepgen).link(dirsetup)
     hal.Pin('%s.dirhold' % stepgen).link(dirhold)
@@ -153,8 +154,11 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
 
     if gantry:
         if gantryJoint == 0:
+            axisHoming = hal.newsig('emcmot-%i-homing' % axisIndex, hal.HAL_BIT)
+            axisHoming.link('%s.homing' % axis)
+
             hal.Pin('gantry.%i.search-vel' % axisIndex).set(c.find(section, 'HOME_SEARCH_VEL'))
-            hal.Pin('gantry.%i.homing' % axisIndex).link('%s.homing' % axis)
+            hal.Pin('gantry.%i.homing' % axisIndex).link(axisHoming)
             hal.Pin('gantry.%i.home' % axisIndex).link(limitHome)
 
             or2 = rt.newinst('or2', 'or2.limit-%i-min' % axisIndex)
@@ -171,12 +175,12 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
                               hal.HAL_BIT)
         limitMax = hal.newsig('limit-%i-%i-max' % (axisIndex, gantryJoint),
                               hal.HAL_BIT)
-        homeOffset = hal.newsig('home-offset-%i-%i' % (axisIndex, gantryJoint),
-                                hal.HAL_BIT)
+        homeOffset = hal.Signal('home-offset-%i-%i' % (axisIndex, gantryJoint),
+                                hal.HAL_FLOAT)
         limitHome.link('gantry.%i.joint.%02i.home' % (axisIndex, gantryJoint))
         limitMin.link('or2.limit-%i-min.in%i' % (axisIndex, gantryJoint))
         limitMax.link('or2.limit-%i-max.in%i' % (axisIndex, gantryJoint))
-        homeOffset.link('%s.joint.%02i.home-offset' % (gantry, gantryJoint))
+        homeOffset.link('gantry.%i.joint.%02i.home-offset' % (axisIndex, gantryJoint))
 
         storage.setup_gantry_storage(axisIndex, gantryJoint)
 
@@ -246,7 +250,7 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     # PID
     pid = rt.newinst('pid', 'pid.%s' % name)
     hal.addf('%s.do-pid-calcs' % pid.name, thread)
-    pid.pin('enable').link('emcmot.00.enable')  # motor enable
+    pid.pin('enable').link('emcmot-0-enable')  # motor enable
     pid.pin('feedback').link(tempMeas)
     pid.pin('command').link(tempSet)
     pid.pin('output').link(tempPidOut)
@@ -401,7 +405,7 @@ def setup_light(name, thread):
 def setup_fan(name, thread):
     setSig = hal.newsig('%s-set' % name, hal.HAL_FLOAT)
     pwmSig = hal.newsig('%s-pwm' % name, hal.HAL_FLOAT)
-    enable = hal.newsig('%s-enable' % name, hal.HAL_FLOAT)
+    enable = hal.newsig('%s-enable' % name, hal.HAL_BIT)
 
     scale = rt.newinst('scale', 'scale.%s' % name)
     hal.addf(scale.name, thread)

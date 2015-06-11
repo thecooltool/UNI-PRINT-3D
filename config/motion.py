@@ -3,11 +3,11 @@ from machinekit import hal
 
 def setup_temperature_io(name):
     index = 0
-    if name is 'hbp':
+    if name == 'hbp':
         index = 0
-    elif name is 'hbc':
+    elif name == 'hbc':
         index = 1
-    elif name[0] is 'e':
+    elif name[0] == 'e':
         index = 2 + int(name[1])
     else:
         raise RuntimeError('temperature io name not known')
@@ -18,7 +18,7 @@ def setup_temperature_io(name):
 
 
 def setup_fan_io(name):
-    if name[0] is 'f':
+    if name[0] == 'f':
         index = 12 + int(name[1])
     else:
         raise RuntimeError('fan io name not known')
@@ -28,7 +28,7 @@ def setup_fan_io(name):
 
 
 def setup_light_io(name):
-    if name[0] is 'l':
+    if name[0] == 'l':
         index = 26 + int(name[1]) * 4
     else:
         raise RuntimeError('light io name not known')

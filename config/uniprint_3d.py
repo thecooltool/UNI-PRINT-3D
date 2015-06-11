@@ -19,12 +19,11 @@ def init_hardware():
     watchList = []
 
     # load low-level drivers
-    rt.loadrt('hal_bb_gpio', output_pins='801,819,826,926', input_pins='941')
-    prubin = '%s/%s' % (c.HAL_RTMOD_DIR, c.find('PRUCONF', 'PRUBIN'))
+    rt.loadrt('hal_bb_gpio', output_pins='807,819,826,926', input_pins='941')
+    prubin = '%s/%s' % (c.Config().EMC2_RTLIB_DIR, c.find('PRUCONF', 'PRUBIN'))
     rt.loadrt(c.find('PRUCONF', 'DRIVER'),
               pru=0, num_stepgens=5, num_pwmgens=0,
               prucode=prubin, halname='hpg')
-
 
     # Python user-mode HAL module to interface with an I2C gpio extender
     hal.loadusr('hal_gpio_mcp23017',
@@ -62,7 +61,8 @@ def init_hardware():
                    c.find('EXTRUDER_0', 'THERMISTOR', defaultThermistor),
                    c.find('EXTRUDER_1', 'THERMISTOR', defaultThermistor),
                    c.find('EXTRUDER_2', 'THERMISTOR', defaultThermistor),
-                   c.find('EXTRUDER_3', 'THERMISTOR', defaultThermistor)))
+                   c.find('EXTRUDER_3', 'THERMISTOR', defaultThermistor)),
+                wait_name='i2c-temp')
     watchList.append(['i2c-temp', 0.1])
 
     base.usrcomp_status('i2c-gpio', 'gpio-hw', thread='servo-thread')
@@ -95,22 +95,22 @@ def setup_hardware(thread):
     hal.Pin('i2c-pwm.out-15.value').set(0.0)
 
     # GPIO
-    hal.Pin('i2c-gpio.A-in-00').link('limit-0-home')    # X
-    hal.Pin('i2c-gpio.A-in-01').link('limit-1-home')    # Y
-    hal.Pin('i2c-gpio.A-in-02').link('limit-2-0-home')  # ZR
-    hal.Pin('i2c-gpio.A-in-03').link('limit-2-1-home')  # ZL
-    hal.Pin('i2c-gpio.A-in-04').link('probe-signal')
-    # hal.Pin('i2c-gpio.A-in-05').link('sensor1')
-    # hal.Pin('i2c-gpio.A-in-06').link('sensor1')
-    # hal.Pin('i2c-gpio.A-in-07').link('sensor1')
-    hal.Pin('i2c-gpio.B-out-00').link('e0-enable')
-    hal.Pin('i2c-gpio.B-out-01').link('e1-enable')
-    hal.Pin('i2c-gpio.B-out-02').link('e2-enable')
-    hal.Pin('i2c-gpio.B-out-03').link('e3-enable')
-    hal.Pin('i2c-gpio.B-out-04').link('led-hbp-info')
-    hal.Pin('i2c-gpio.B-out-05').link('led-hbp-hot')
-    hal.Pin('i2c-gpio.B-in-06').link('pwr-mon')
-    hal.Pin('i2c-gpio.B-in-07').link('hbp-mon')
+    hal.Pin('i2c-gpio.A.in-00').link('limit-0-home')    # X
+    hal.Pin('i2c-gpio.A.in-01').link('limit-1-home')    # Y
+    hal.Pin('i2c-gpio.A.in-02').link('limit-2-0-home')  # ZR
+    hal.Pin('i2c-gpio.A.in-03').link('limit-2-1-home')  # ZL
+    hal.Pin('i2c-gpio.A.in-04').link('probe-signal')
+    # hal.Pin('i2c-gpio.A.in-05').link('sensor1')
+    # hal.Pin('i2c-gpio.A.in-06').link('sensor1')
+    # hal.Pin('i2c-gpio.A.in-07').link('sensor1')
+    hal.Pin('i2c-gpio.B.out-00').link('e0-enable')
+    hal.Pin('i2c-gpio.B.out-01').link('e1-enable')
+    hal.Pin('i2c-gpio.B.out-02').link('e2-enable')
+    hal.Pin('i2c-gpio.B.out-03').link('e3-enable')
+    hal.Pin('i2c-gpio.B.out-04').link('led-hbp-info')
+    hal.Pin('i2c-gpio.B.out-05').link('led-hbp-hot')
+    hal.Pin('i2c-gpio.B.in-06').link('pwr-mon')
+    hal.Pin('i2c-gpio.B.in-07').link('hbp-mon')
 
     # Adjust as needed for your switch polarity
     hal.Pin('i2c-gpio.A.in-00.invert').set(True)
@@ -166,9 +166,9 @@ def setup_hardware(thread):
 
     # charge pump
     chargePump = rt.loadrt('charge_pump')
-    hal.addf(chargePump.name, thread)
-    chargePump.pin('out').link('charge-pump-out')
-    chargePump.pin('enable').link('emcmot.00.enable')
+    hal.addf('charge-pump', thread)
+    hal.Pin('charge-pump.out').link('charge-pump-out')
+    hal.Pin('charge-pump.enable').link('emcmot-0-enable')
 
     # charge pump tied to machine power
     hal.Pin('bb_gpio.p8.out-19').link('charge-pump-out')
@@ -180,7 +180,7 @@ def setup_hardware(thread):
 
     # Tie machine power signal to the Parport Cape LED
     # Feel free to tie any other signal you like to the LED
-    hal.Pin('bb_gpio.p8.out-26').link('emcmot.00.enable')
+    hal.Pin('bb_gpio.p8.out-26').link('emcmot-0-enable')
     # hal.Pin('bb_gpio.p8.out-26.invert').set(True)
 
     # link emcmot.xx.enable to stepper driver enable signals
@@ -210,4 +210,4 @@ def setup_hbp_led(thread):
 
 def setup_exp(name):
     hal.newsig('%s-pwm' % name, hal.HAL_FLOAT, init=0.0)
-    hal.newsig('%s-enable' % name, hal.HAL_FLOAT, init=False)
+    hal.newsig('%s-enable' % name, hal.HAL_BIT, init=False)

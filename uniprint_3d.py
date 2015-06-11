@@ -66,7 +66,7 @@ base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
 
 # LEDs
 for i in range(0, numLights):
-    base.setup_fan('l%i' % i, thread='servo-thread')
+    base.setup_light('l%i' % i, thread='servo-thread')
 # HB LED
 uniprint_3d.setup_hbp_led(thread='servo-thread')
 
