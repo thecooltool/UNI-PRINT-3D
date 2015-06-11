@@ -1,9 +1,9 @@
 /******************************************************************************
  *
- * Copyright (C) 2015 Alexander Rössler
+ * Copyright (C) 2014 Alexander Rössler
  *
  *
- * This module resets a IO signal
+ * This module allows dimming LEDs using HAL
  *
  ******************************************************************************
  *
@@ -36,34 +36,33 @@
  *
  ******************************************************************************/
 
-component reset "Resets a IO signal";
-pin in  bit     trigger             "Trigger input";
-pin io  u32     out_u32      = 0    "Unsigned 32 bit integer output value";
-pin in  u32     reset_u32    = 0    "Unsigned 32 bit integer reset value";
-pin io  s32     out_s32      = 0    "Signed 32 bit integer output value";
-pin in  s32     reset_s32    = 0    "Signed 32 bit integer reset value";
-pin io  float   out_float    = 0.0  "Float output value";
-pin in  float   reset_float  = 0.0  "Float reset value";
-pin io  bit     out_bit      = 0    "Bit integer output value";
-pin in  bit     reset_bit    = 0    "Bit reset value";
-pin in  bit     retriggerable = 1   "Allow additional edges to reset";
-pin in  bit     rising        = 1   "Trigger on rising edge";
-pin in  bit     falling       = 0   "Trigger on falling edge";
+component led_dim "LinuxCNC HAL component for dimming LEDs";
+pin in  u32   steps "Input steps";
+pin in  u32   max_pwm "PWM steps (usually 2^n)";
+pin in  float factor "The dim factor";
+pin in  float input "Input value -> 0 to 1";
+pin out float output "Output value -> 0 to 1";
 function _  fp "Update the output value";
 description """
-Component to reset IO signals.
+Component for dimming LEDs
+.LP
+The output value can be tuned using the the factor input
 """;
 license "GPL";
-variable hal_bit_t last_trigger = 0;
+variable hal_float_t basis = 1.0;
+variable hal_float_t lastInput = 0.0;
 ;;
+#include <rtapi_math.h>
+
 FUNCTION(_) {
-    if (((rising && (trigger == 1)) || (falling && (trigger == 0)))
-       && (trigger != last_trigger))
+    hal_float_t value;
+    if (lastInput != input)
     {
-        out_u32 = reset_u32;
-        out_s32 = reset_s32;
-        out_float = reset_float;
-        out_bit = reset_bit;
+        basis = rtapi_pow((hal_float_t)max_pwm/factor, 1.0 / (hal_float_t)(steps-1));
+        value = (factor * rtapi_pow(basis, input * (hal_float_t)steps)) / ((hal_float_t)(max_pwm));
+        output = (value > 1.0) ? 1.0 : value;
+        lastInput = input;
     }
-    last_trigger = trigger;
+
+    return 0;
 }

@@ -36,99 +36,95 @@
  *
  ******************************************************************************/
 
-component thermistor_check "LinuxCNC HAL component for checking functionality of thermistors";
-pin in  float   temp      "Temperature input";
-pin in  float   min_temp  "The minimum temperature change that should count";
-pin in  float   pid       "Output of PID control";
-pin in  float   min_pid   "The minimum PID control output to react to";
-pin in  float   bias      "Bias for the PID input. Can be used to correct errors due to cooling.";
-pin in  float   wait      "Time to wait before triggering an error in secods";
-pin in  bit     enable    "Enables or disables the component, out is TRUE when disabled";
-pin out bit     no_error  "Output value -> TRUE when the thermistor works as exspected";
-pin out bit     error     "Error value -> FALSE when the thermistor works as exspected";
+component logic_fuse "HAL component for filtering error values";
+pin in  bit     in = 0      "input value";
+pin out bit     out         "output value";
+pin in  float   wait = 0.5  "Time to wait before triggering an error in secods";
+pin in  bit     reset = 0   "Resets the error";
+pin in  bit     enable = 1  "When disabled the input values is passed to the output";
 function _  fp "Update the output value";
 description """
-Component for checking functionality of thermistors
+Component for filtering error values
 .LP
 TODO
 """;
 license "GPL";
-variable hal_float_t last_temp = 0.0;
-variable hal_bit_t last_enable = 0;
+variable hal_bit_t last_reset = 0;
 variable hal_float_t oldwait = 0.0;
-variable int t_secs = 0;
-variable int t_nsecs = 0;
-variable int c_secs = 0;
-variable int c_nsecs = 0;
-variable hal_bit_t start = 0;
+variable long t_secs = 0;
+variable long t_nsecs = 0;
+variable long c_secs = 0;
+variable long c_nsecs = 0;
+variable hal_bit_t triggered = 0;
+variable hal_bit_t timeout = 0;
 ;;
 FUNCTION(_) {
-    hal_float_t temp_change;
-    float time;
-    
     if (wait != oldwait)
     {
+        hal_float_t time;
+
         time = wait;
-        if (time < 0) time = 0; // no negative timeout periods
+        if (time < 0.0) time = 0.0; // no negative timeout periods
         // new timeout, convert to secs/ns
         oldwait = time;
-        t_secs = time;
-        time -= t_secs;
-        t_nsecs = (1e9 * time);
-        
-        if (enable) {
-            // reset
-            start = 1;
-        }
+        t_secs = (long)time;
+        time -= (hal_float_t)t_secs;
+        t_nsecs = (long)(1.0e9 * time);
     }
 
-    if ((enable) && (pid >= (min_pid+bias)))
+    if (enable)
     {
-        if (start == 1)
+        if ((reset ^ last_reset) && reset) // reset
         {
-            // reset
-            c_secs = t_secs;
-            c_nsecs = t_nsecs;
-            last_temp = temp;
-            start = 0;
+            out = 0;
+            triggered = 0;
+            timeout = 0;
         }
-        else
+        else if (!timeout) // no timeout
         {
-            c_nsecs -= period;
-            if (c_nsecs < 0)
+            if (in) // error on source
             {
-                c_nsecs += 1000000000;
-                if (c_secs > 0) 
+                if (!triggered) // triggering timer
                 {
-                    c_secs--;
+                    c_secs = t_secs;
+                    c_nsecs = t_nsecs;
+                    triggered = 1;
                 }
                 else
                 {
-                    start = 1; // restart
+                    c_nsecs -= period;
+                    if (c_nsecs < 0)
+                    {
+                        c_nsecs += 1000000000;
+                        if (c_secs > 0)
+                        {
+                            c_secs--;
+                        }
+                        else
+                        {
+                            timeout = 1; // timeout happened
+                            out = 1;
+                        }
+                    }
                 }
             }
-            
-            if (start == 1)
+            else
             {
-                temp_change = temp - last_temp;
-
-                if (temp_change >= min_temp)    // correct
-                {
-                    no_error = 1;
-                    error = 0;
-                }
-                else
-                {
-                    no_error = 0;
-                    error = 1;
-                }
+                out = 0;
+                triggered = 0; // reset the trigger
             }
+        }
+        else // timeout
+        {
+            out = 1; // out stays 1 until reset or enable is changed
         }
     }
     else
     {
-        start = 1;
-        no_error = 1;
-        error = 0;
+        out = in;
     }
+
+    last_reset = reset;
+
+    return 0;
 }

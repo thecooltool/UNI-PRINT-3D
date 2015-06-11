@@ -3,8 +3,6 @@
 import sys
 import os
 import subprocess
-import importlib
-import argparse
 from time import *
 from machinekit import launcher
 from machinekit import config
@@ -19,10 +17,10 @@ try:
     launcher.check_installation()
     launcher.cleanup_session()
     launcher.load_bbio_file('paralell_cape3.bbio')
-    launcher.install_comp('thermistor_check.comp')
-    launcher.install_comp('reset.comp')
-    launcher.install_comp('led_dim.comp')
-    launcher.install_comp('logic_fuse.comp')
+    launcher.install_comp('thermistor_check.icomp')
+    launcher.install_comp('reset.icomp')
+    launcher.install_comp('led_dim.icomp')
+    launcher.install_comp('logic_fuse.icomp')
     launcher.start_process("configserver -n Uni-print-3D ~/Machineface")
     launcher.start_process('linuxcnc UNIPRINT-3D.ini')
 except subprocess.CalledProcessError:
