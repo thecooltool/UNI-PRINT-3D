@@ -12,7 +12,7 @@ from config import storage
 
 # HAL file for BeagleBone + TCT paralell port cape with 5 steppers and 3D printer board
 rt.init_RTAPI()
-c.load_ini('UNIPRINT-3D.ini')
+c.load_ini('UNIPRINT-3D_P1.ini')
 
 base.setup_motion()
 uniprint_3d.init_hardware()
@@ -83,6 +83,7 @@ base.setup_probe(thread='servo-thread')
 uniprint_3d.setup_hardware(thread='servo-thread')
 
 # write out functions
+hal.addf('motion-controller', 'servo-thread')
 base.gantry_write(gantryAxis=2, thread='servo-thread')
 uniprint_3d.hardware_write()
 

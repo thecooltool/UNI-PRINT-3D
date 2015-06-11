@@ -125,11 +125,11 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
                 posCmd.link('gantry.%i.position-cmd' % axisIndex)
 
             posFb = hal.newsig('emcmot-%i-pos-fb' % axisIndex, hal.HAL_FLOAT)
+            posFb.link('%s.motor-pos-fb' % axis)
             if not gantry:
                 posFb.link('%s.position-fb' % stepgen)
             else:
                 posFb.link('gantry.%i.position-fb' % axisIndex)
-                posFb.link('%s.motor-pos-fb' % axis)
 
         if gantry:  # per joint fb and cmd
             posCmd = hal.newsig('emcmot-%i-%i-pos-cmd' % (axisIndex, gantryJoint), hal.HAL_FLOAT)

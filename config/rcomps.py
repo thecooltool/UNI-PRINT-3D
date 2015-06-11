@@ -26,7 +26,7 @@ def create_temperature_rcomp(name, timer=100):
 
 
 def create_fan_rcomp(name, timer=100):
-    comp = hal.RemoteComponent(name, timer=timer)
+    comp = hal.RemoteComponent('fdm-%s' % name, timer=timer)
     comp.newpin('set', hal.HAL_FLOAT, hal.HAL_IO)
     comp.ready()
 

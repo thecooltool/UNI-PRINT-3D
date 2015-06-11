@@ -68,24 +68,29 @@ def init_hardware():
     base.usrcomp_status('i2c-gpio', 'gpio-hw', thread='servo-thread')
     base.usrcomp_status('i2c-pwm', 'pwm-hw', thread='servo-thread')
     base.usrcomp_status('i2c-temp', 'temp-hw', thread='servo-thread')
-    base.usrcomp_watchdog(watchList, 'estop-user', thread='servo-thread',
+    base.usrcomp_watchdog(watchList, 'estop-reset', thread='servo-thread',
                           errorSignal='watchdog-error')
 
 
 def setup_hardware(thread):
     # PWM
+    # HBP
+    hal.Pin('i2c-pwm.out-00.enable').set(True)
+    hal.Pin('i2c-pwm.out-00.value').link('hbp-temp-pwm')
     # configure extruders
     for n in range(0, 4):
-        hal.Pin('i2c-pwm.out-%02i.enable' % n).set(True)
-        hal.Pin('i2c-pwm.out-%02i.value' % n).link('e%i-temp-pwm' % n)
+        hal.Pin('i2c-pwm.out-%02i.enable' % (n + 1)).set(True)
+        hal.Pin('i2c-pwm.out-%02i.value' % (n + 1)).link('e%i-temp-pwm' % n)
     # configure fans
     for n in range(0, 4):
-        hal.Pin('i2c-pwm.out-%02i.enable' % (n + 5)).link('f%i-enable' % n)
+        hal.Pin('i2c-pwm.out-%02i.enable' % (n + 5)).link('f%i-pwm-enable' % n)
         hal.Pin('i2c-pwm.out-%02i.value' % (n + 5)).link('f%i-pwm' % n)
+        hal.Signal('f%i-pwm-enable' % n).set(True)
     # configure exps
     for n in range(0, 2):
-        hal.Pin('i2c-pwm.out-%02i.enable' % (n + 9)).link('exp%i-enable' % n)
+        hal.Pin('i2c-pwm.out-%02i.enable' % (n + 9)).link('exp%i-pwm-enable' % n)
         hal.Pin('i2c-pwm.out-%02i.value' % (n + 9)).link('exp%i-pwm' % n)
+        hal.Signal('exp%i-pwm' % n).set(1.0)
     # configure leds
     for n, color in enumerate(('g', 'r', 'b', 'w')):
         hal.Pin('i2c-pwm.out-%02i.enable' % (n + 11)).set(True)
@@ -174,6 +179,7 @@ def setup_hardware(thread):
     hal.Pin('bb_gpio.p8.out-19').link('charge-pump-out')
     # Monitor estop input from hardware
     hal.Pin('bb_gpio.p9.in-41').link('estop-in')
+    hal.Pin('bb_gpio.p9.in-41.invert').set(True)
     # drive estop-sw
     hal.Pin('bb_gpio.p8.out-07').link('estop-out')
     hal.Pin('bb_gpio.p8.out-07.invert').set(True)
