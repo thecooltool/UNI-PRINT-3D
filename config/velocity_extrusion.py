@@ -228,6 +228,7 @@ def velocity_extrusion(thread):
     oneshot.pin('falling').set(True)
     oneshot.pin('retriggerable').set(True)
     oneshot.pin('width').link(retractTime)
+    oneshot.pin('in').link(extruderEn)
     oneshot.pin('out').link(retract)
 
     retract += 'motion.feed-hold'  # stop motion until retract/unretract finished
