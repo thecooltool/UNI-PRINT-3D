@@ -47,18 +47,19 @@ numLights = c.find('FDM', 'NUM_LIGHTS')
 withAbp = c.find('FDM', 'ABP', False)
 
 # Extruder Multiplexer
-base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
+base.setup_extruder_multiplexer(extruders=(numExtruders + int(withAbp)), thread='servo-thread')
 # Stepper Multiplexer
 multiplexSections = []
 for i in range(0, numExtruders):
     multiplexSections.append('EXTRUDER_%i' % i)
-if withAbp:
+if withAbp:  # not a very good solution
     multiplexSections.append('ABP')
+    multiplexSections.append('ABP')  # no this is no mistake, we need an additional section
+    hal.Pin('motion.digital-out-io-20').link('stepgen-4-control-type')
+    hal.net('stepgen-4-pos-cmd', 'motion.analog-out-io-50', 'hpg.stepgen.04.position-cmd')
+    hal.net('stepgen-4-pos-fb', 'motion.analog-in-50', 'hpg.stepgen.04.position-fb')
 base.setup_stepper_multiplexer(stepgenIndex=4, sections=multiplexSections,
                                selSignal='extruder-sel', thread='servo-thread')
-if withAbp:  # not a very good solution
-    hal.Pin('mux2.stepgen-4-control-type.in1').set(0)
-    hal.Pin('motion.analog-out-io-50').link('hpg.stepgen.04.position-cmd')
 
 # Fans
 for i in range(0, numFans):

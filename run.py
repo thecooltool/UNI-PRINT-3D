@@ -38,10 +38,10 @@ startupIniName = 'startup.ini'
 sourceIni = open(configName)  # open ini
 lines = sourceIni.readlines()
 sourceIni.close()
-lines.append('NUM_EXTRUDERS = %i' % numExtruders)
-lines.append('NUM_FAN = %i' % numExtruders)
+lines.append('NUM_EXTRUDERS = %i\n' % numExtruders)
+lines.append('NUM_FANS = %i\n' % numExtruders)
 if withAbp:
-    lines.append('ABP = 1')
+    lines.append('ABP = 1\n')
 startupIni = open(startupIniName, 'w')
 startupIni.writelines(lines)  # copy file contents
 startupIni.close()
