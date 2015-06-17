@@ -218,6 +218,14 @@ def setup_stepper_multiplexer(stepgenIndex, sections, selSignal, thread):
         mux.pin('sel').link(selSignal)
         mux.pin('out').link(signal)
 
+    signal = hal.Signal('%s-%s' % (sigBase, 'control-type'), hal.HAL_BIT)
+    mux = rt.newinst('muxn', 'mux%i.%s' % (num, signal.name), pincount=num)
+    hal.addf(mux.name, thread)
+    for n, _ in enumerate(sections):
+        mux.pin('in%i' % n).set(signal.get())
+    mux.pin('sel').link(selSignal)
+    mux.pin('out').link(signal)
+
 
 def setup_probe(thread):
     probeEnable = hal.newsig('probe-enable', hal.HAL_BIT)

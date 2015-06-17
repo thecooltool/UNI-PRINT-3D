@@ -41,9 +41,10 @@ base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=3,
 base.setup_stepper(section='EXTRUDER_0', stepgenIndex=4, velocitySignal='ve-extrude-vel')
 # TODO ABP
 
-numFans = int(c.find('FDM', 'NUM_FANS'))
-numExtruders = int(c.find('FDM', 'NUM_EXTRUDERS'))
-numLights = int(c.find('FDM', 'NUM_LIGHTS'))
+numFans = c.find('FDM', 'NUM_FANS')
+numExtruders = c.find('FDM', 'NUM_EXTRUDERS')
+numLights = c.find('FDM', 'NUM_LIGHTS')
+withAbp = c.find('FDM', 'ABP', False)
 
 # Extruder Multiplexer
 base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
@@ -51,8 +52,13 @@ base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
 multiplexSections = []
 for i in range(0, numExtruders):
     multiplexSections.append('EXTRUDER_%i' % i)
+if withAbp:
+    multiplexSections.append('ABP')
 base.setup_stepper_multiplexer(stepgenIndex=4, sections=multiplexSections,
                                selSignal='extruder-sel', thread='servo-thread')
+if withAbp:  # not a very good solution
+    hal.Pin('mux2.stepgen-4-control-type.in1').set(0)
+    hal.Pin('motion.analog-out-io-50').link('hpg.stepgen.04.position-cmd')
 
 # Fans
 for i in range(0, numFans):
