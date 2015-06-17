@@ -187,6 +187,38 @@ def setup_stepper(stepgenIndex, section, axisIndex=None,
     # stepper pins configured in hardware setup
 
 
+def setup_stepper_multiplexer(stepgenIndex, sections, selSignal, thread):
+    num = len(sections)
+    sigBase = 'stepgen-%i' % stepgenIndex
+
+    unsignedSignals = [['dirsetup', 'DIRSETUP'],
+                       ['dirhold', 'DIRHOLD'],
+                       ['steplen', 'STEPLEN'],
+                       ['stepspace', 'STEPSPACE']]
+
+    floatSignals = [['scale', 'SCALE'],
+                    ['max-vel', 'STEPGEN_MAX_VEL'],
+                    ['max-acc', 'STEPGEN_MAX_ACC']]
+
+    for item in unsignedSignals:
+        signal = hal.Signal('%s-%s' % (sigBase, item[0]), hal.HAL_U32)
+        mux = rt.newinst('muxn_u32', 'mux%i.%s' % (num, signal.name), pincount=num)
+        hal.addf(mux.name, thread)
+        for n, section in enumerate(sections):
+            mux.pin('in%i' % n).set(c.find(section, item[1]))
+        mux.pin('sel').link(selSignal)
+        mux.pin('out').link(signal)
+
+    for item in floatSignals:
+        signal = hal.Signal('%s-%s' % (sigBase, item[0]), hal.HAL_FLOAT)
+        mux = rt.newinst('muxn', 'mux%i.%s' % (num, signal.name), pincount=num)
+        hal.addf(mux.name, thread)
+        for n, section in enumerate(sections):
+            mux.pin('in%i' % n).set(c.find(section, item[1]))
+        mux.pin('sel').link(selSignal)
+        mux.pin('out').link(signal)
+
+
 def setup_probe(thread):
     probeEnable = hal.newsig('probe-enable', hal.HAL_BIT)
     probeInput = hal.newsig('probe-input', hal.HAL_BIT)

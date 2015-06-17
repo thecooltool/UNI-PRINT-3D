@@ -1,4 +1,4 @@
-import math
+import os
 
 from machinekit import rtapi as rt
 from machinekit import hal
@@ -12,7 +12,7 @@ from config import storage
 
 # HAL file for BeagleBone + TCT paralell port cape with 5 steppers and 3D printer board
 rt.init_RTAPI()
-c.load_ini('UNIPRINT-3D_P1.ini')
+c.load_ini(os.environ['INI_FILE_NAME'])
 
 base.setup_motion()
 uniprint_3d.init_hardware()
@@ -38,12 +38,21 @@ base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=2,
 base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=3,
             gantry=True, gantryJoint=1)
 # Extruder, velocity controlled
-base.setup_stepper(section='AXIS_3', stepgenIndex=4, velocitySignal='ve-extrude-vel')
+base.setup_stepper(section='EXTRUDER_0', stepgenIndex=4, velocitySignal='ve-extrude-vel')
 # TODO ABP
 
 numFans = int(c.find('FDM', 'NUM_FANS'))
 numExtruders = int(c.find('FDM', 'NUM_EXTRUDERS'))
 numLights = int(c.find('FDM', 'NUM_LIGHTS'))
+
+# Extruder Multiplexer
+base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
+# Stepper Multiplexer
+multiplexSections = []
+for i in range(0, numExtruders):
+    multiplexSections.append('EXTRUDER_%i' % i)
+base.setup_stepper_multiplexer(stepgenIndex=4, sections=multiplexSections,
+                               selSignal='extruder-sel', thread='servo-thread')
 
 # Fans
 for i in range(0, numFans):
@@ -60,9 +69,6 @@ for i in range(0, numExtruders):
                                     coolingFan='f%i' % i, hotendFan='exp%i' % i,
                                     hardwareOkSignal='temp-hw-ok',
                                     thread='servo-thread')
-
-# Extruder Multiplexer
-base.setup_extruder_multiplexer(extruders=numExtruders, thread='servo-thread')
 
 # LEDs
 for i in range(0, numLights):
