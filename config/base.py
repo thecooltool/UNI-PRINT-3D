@@ -340,7 +340,7 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     # net e0.therm-ok               <= thermistor-check.e0.no-error
 
     # no error chain
-    and3 = rt.newinst('and', 'and3.%s-no-error-in' % name, pincount=3)
+    and3 = rt.newinst('andn', 'and3.%s-no-error-in' % name, pincount=3)
     hal.addf(and3.name, thread)
     and3.pin('in0').link(tempThermOk)
     and3.pin('in1').link(tempInLimit)
@@ -461,7 +461,7 @@ def setup_estop(errorSignals, thread):
     estopError = hal.Signal('estop-error', hal.HAL_BIT)
 
     num = len(errorSignals)
-    orComp = rt.newinst('or', 'or%i.estop-error' % num, pincount=num)
+    orComp = rt.newinst('orn', 'or%i.estop-error' % num, pincount=num)
     hal.addf(orComp.name, thread)
     for n, sig in enumerate(errorSignals):
         orComp.pin('in%i' % n).link(sig)
