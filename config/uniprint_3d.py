@@ -200,16 +200,16 @@ def setup_hbp_led(thread):
     # low temp
     comp = rt.newinst('comp', 'comp.hbp-info')
     hal.addf(comp.name, thread)
-    comp.pin('in0').set(50.0)
-    comp.pin('in1').link(tempMeas)
+    comp.pin('in0').link(tempMeas)
+    comp.pin('in1').set(50.0)
     comp.pin('hyst').set(2.0)
     comp.pin('out').link(ledHbpInfo)
 
     # high temp
     comp = rt.newinst('comp', 'comp.hbp-hot')
     hal.addf(comp.name, thread)
-    comp.pin('in0').link(tempMeas)
-    comp.pin('in1').set(50.0)
+    comp.pin('in0').set(50.0)
+    comp.pin('in1').link(tempMeas)
     comp.pin('hyst').set(2.0)
     comp.pin('out').link(ledHbpHot)
 
