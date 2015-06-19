@@ -2,7 +2,7 @@ from machinekit import hal
 from machinekit import rtapi as rt
 from machinekit import config as c
 
-import base
+from config import base
 
 
 def hardware_read():
