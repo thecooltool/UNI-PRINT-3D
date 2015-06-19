@@ -5,9 +5,9 @@ from machinekit import hal
 from machinekit import config as c
 
 from config import velocity_extrusion as ve
-from config import uniprint_3d
 from config import base
 from config import storage
+import hardware
 
 
 # HAL file for BeagleBone + TCT paralell port cape with 5 steppers and 3D printer board
@@ -15,14 +15,14 @@ rt.init_RTAPI()
 c.load_ini(os.environ['INI_FILE_NAME'])
 
 base.setup_motion()
-uniprint_3d.init_hardware()
+hardware.init_hardware()
 storage.init_storage('storage.ini')
 
 # Gantry component for Z Axis
 base.init_gantry(axisIndex=2)
 
 # reading functions
-uniprint_3d.hardware_read()
+hardware.hardware_read()
 base.gantry_read(gantryAxis=2, thread='servo-thread')
 hal.addf('motion-command-handler', 'servo-thread')
 
@@ -39,7 +39,6 @@ base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=3,
             gantry=True, gantryJoint=1)
 # Extruder, velocity controlled
 base.setup_stepper(section='EXTRUDER_0', stepgenIndex=4, velocitySignal='ve-extrude-vel')
-# TODO ABP
 
 numFans = c.find('FDM', 'NUM_FANS')
 numExtruders = c.find('FDM', 'NUM_EXTRUDERS')
@@ -65,7 +64,7 @@ base.setup_stepper_multiplexer(stepgenIndex=4, sections=multiplexSections,
 for i in range(0, numFans):
     base.setup_fan('f%i' % i, thread='servo-thread')
 for i in range(0, numExtruders):
-    uniprint_3d.setup_exp('exp%i' % i)
+    hardware.setup_exp('exp%i' % i)
 
 # Temperature Signals
 base.create_temperature_control(name='hbp', section='HBP',
@@ -81,7 +80,7 @@ for i in range(0, numExtruders):
 for i in range(0, numLights):
     base.setup_light('l%i' % i, thread='servo-thread')
 # HB LED
-uniprint_3d.setup_hbp_led(thread='servo-thread')
+hardware.setup_hbp_led(thread='servo-thread')
 
 # Standard I/O - EStop, Enables, Limit Switches, Etc
 errorSignals = ['gpio-hw-error', 'pwm-hw-error', 'temp-hw-error',
@@ -93,12 +92,12 @@ base.setup_tool_loopback()
 # Probe
 base.setup_probe(thread='servo-thread')
 # Setup Hardware
-uniprint_3d.setup_hardware(thread='servo-thread')
+hardware.setup_hardware(thread='servo-thread')
 
 # write out functions
 hal.addf('motion-controller', 'servo-thread')
 base.gantry_write(gantryAxis=2, thread='servo-thread')
-uniprint_3d.hardware_write()
+hardware.hardware_write()
 
 # Storage
 storage.read_storage()
