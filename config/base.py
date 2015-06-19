@@ -405,7 +405,7 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
 
 
 def setup_extruder_multiplexer(extruders, thread):
-    extruderSel = hal.newsig('extruder-sel', hal.HAL_S32)
+    extruderSel = hal.Signal('extruder-sel', hal.HAL_S32)
 
     select8 = rt.newinst('select8', 'select8.extruder-sel')
     hal.addf(select8.name, thread)
@@ -485,6 +485,11 @@ def setup_tool_loopback():
     # create signals for tool loading loopback
     hal.net('iocontrol.0.tool-prepare', 'iocontrol.0.tool-prepared')
     hal.net('iocontrol.0.tool-change', 'iocontrol.0.tool-changed')
+
+
+def setup_estop_loopback():
+    # create signal for estop loopback
+    hal.net('iocontrol.0.user-enable-out', 'iocontrol.0.emc-enable-in')
 
 
 def init_gantry(axisIndex, joints=2, latching=True):
