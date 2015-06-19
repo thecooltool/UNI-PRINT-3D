@@ -53,6 +53,7 @@ try:
     launcher.install_comp('thermistor_check.icomp')
     launcher.install_comp('led_dim.icomp')
     launcher.install_comp('logic_fuse.icomp')
+    launcher.install_comp('io_muxn.icomp')
     cfg = configparser.ConfigParser({'NAME': ''})
     cfg.read(startupIniName)
     machineName = cfg.get('EMC', 'NAME')
