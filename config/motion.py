@@ -46,13 +46,16 @@ def setup_probe_io():
 
 
 def setup_ve_io():
-    hal.Pin('motion.analog-out-41').link('ve-cross-section')
+    hal.Pin('motion.analog-out-io-41').link('ve-cross-section')
     hal.Pin('motion.analog-out-42').link('ve-line-width')
     hal.Pin('motion.analog-out-43').link('ve-line-height')
     hal.Pin('motion.analog-out-io-44').link('ve-filament-dia')
     hal.Pin('motion.analog-out-io-45').link('ve-jog-velocity')
     hal.Pin('motion.analog-out-io-46').link('ve-jog-distance')
+    hal.Pin('motion.analog-out-io-47').link('ve-retract-len')
+    hal.Pin('motion.analog-out-io-48').link('ve-retract-vel')
+    hal.Pin('motion.analog-out-io-49').link('ve-extrude-scale')
     hal.Pin('motion.digital-out-io-01').link('ve-extruder-en')
-    hal.Pin('motion.digital-out-io-02').link('ve-jog-trigger')
-    hal.Pin('motion.digital-in-12').link('ve-jog-trigger')
-
+    hal.Pin('motion.digital-out-io-12').link('ve-jog-trigger')
+    hal.Pin('motion.digital-out-io-13').link('ve-jog-continuous')
+    hal.Pin('motion.digital-out-io-14').link('ve-jog-direction')

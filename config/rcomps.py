@@ -47,25 +47,29 @@ def create_light_rcomp(name, timer=100):
     comp.pin('w').link('%s-w' % name)
 
 
-def create_ve_jog_rcomp(timer=100):
+def create_ve_jog_rcomp(extruders, timer=100):
     name = 'fdm-ve-jog'
     comp = hal.RemoteComponent(name, timer=timer)
     comp.newpin('distance', hal.HAL_FLOAT, hal.HAL_IO)
     comp.newpin('velocity', hal.HAL_FLOAT, hal.HAL_IO)
     comp.newpin('direction', hal.HAL_BIT, hal.HAL_IO)
     comp.newpin('trigger', hal.HAL_BIT, hal.HAL_IO)
-    comp.newpin('continous', hal.HAL_BIT, hal.HAL_OUT)
+    comp.newpin('continuous', hal.HAL_BIT, hal.HAL_IO)
     comp.newpin('dtg', hal.HAL_FLOAT, hal.HAL_IN, eps=1)
     comp.newpin('max-velocity', hal.HAL_FLOAT, hal.HAL_IN)
+    comp.newpin('extruder-count', hal.HAL_U32, hal.HAL_IN)
+    comp.newpin('extruder-sel', hal.HAL_S32, hal.HAL_IN)
     comp.ready()
 
     comp.pin('distance').link('ve-jog-distance')
     comp.pin('velocity').link('ve-jog-velocity')
     comp.pin('direction').link('ve-jog-direction')
     comp.pin('trigger').link('ve-jog-trigger')
-    comp.pin('continous').link('ve-jog-continous')
+    comp.pin('continuous').link('ve-jog-continuous')
     comp.pin('dtg').link('ve-jog-dtg')
     comp.pin('max-velocity').link('ve-max-velocity')
+    comp.pin('extruder-count').set(extruders)
+    comp.pin('extruder-sel').link('extruder-sel')
 
 
 def create_ve_params_rcomp(timer=100):

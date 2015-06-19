@@ -16,13 +16,15 @@ def setup_gantry_storage(gantryAxis, gantryJoint):
        .link('home-offset-%i-%i' % (gantryAxis, gantryJoint))
 
 
-def setup_ve_storage():
-    hal.Pin('storage.retract.velocity').link('ve-retract-vel')
-    hal.Pin('storage.retract.length').link('ve-retract-len')
-    hal.Pin('storage.filament.diameter').link('ve-filament-dia')
-    hal.Pin('storage.extruder.jog-velocity').link('ve-jog-velocity')
+def setup_ve_storage(extruders):
+    for n in range(0, extruders):
+        hal.Pin('storage.e%i.retract-vel' % n).link('ve-retract-vel-e%i' % n)
+        hal.Pin('storage.e%i.retract-len' % n).link('ve-retract-len-e%i' % n)
+        hal.Pin('storage.e%i.filament-dia' % n).link('ve-filament-dia-e%i' % n)
+        hal.Pin('storage.e%i.jog-velocity' % n).link('ve-jog-velocity-e%i' % n)
+        hal.Pin('storage.e%i.extrude-scale' % n).link('ve-extrude-scale-e%i' % n)
 
 
 def setup_light_storage(name):
     for color in ('r', 'g', 'b', 'w'):
-        hal.Pin('storage.%s.%s' % (name, color)).link('%s.%s' % (name, color))
+        hal.Pin('storage.%s.%s' % (name, color)).link('%s-%s' % (name, color))

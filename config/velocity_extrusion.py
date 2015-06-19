@@ -9,7 +9,7 @@ import storage
 import motion
 
 
-def velocity_jog(thread):
+def velocity_jog(extruders, thread):
     ''' Velocity extruding jog support '''
     # from ui
     jogVelocity = hal.newsig('ve-jog-velocity', hal.HAL_FLOAT)
@@ -17,7 +17,7 @@ def velocity_jog(thread):
     jogDistance = hal.newsig('ve-jog-distance', hal.HAL_FLOAT)
     jogTrigger = hal.newsig('ve-jog-trigger', hal.HAL_BIT)
     jogDtg = hal.newsig('ve-jog-dtg', hal.HAL_FLOAT)
-    jogContinous = hal.newsig('ve-jog-continous', hal.HAL_BIT)
+    jogContinuous = hal.newsig('ve-jog-continuous', hal.HAL_BIT)
     # helper signals
     jogEnable = hal.newsig('ve-jog-enable', hal.HAL_BIT)
     jogVelocityNeg = hal.newsig('ve-jog-velocity-neg', hal.HAL_FLOAT)
@@ -52,14 +52,22 @@ def velocity_jog(thread):
     oneshot.pin('in').link(jogTrigger)
     oneshot.pin('width').link(jogTime)
     oneshot.pin('time-left').link(jogTimeLeft)
-    oneshot.pin('rising').set(1)
-    oneshot.pin('falling').set(1)
+    oneshot.pin('rising').set(True)
+    oneshot.pin('falling').set(False)
     oneshot.pin('retriggerable').set(1)
     oneshot.pin('out').link(jogActive)
 
+    reset = rt.newinst('reset', 'reset.ve-jog-trigger')
+    hal.addf(reset.name, thread)
+    reset.pin('reset-bit').set(False)
+    reset.pin('out-bit').link(jogTrigger)
+    reset.pin('rising').set(False)
+    reset.pin('falling').set(True)
+    reset.pin('trigger').link(jogActive)
+
     or2 = rt.newinst('or2', 'or2.ve-jog-enable')
     hal.addf(or2.name, thread)
-    or2.pin('in0').link(jogContinous)
+    or2.pin('in0').link(jogContinuous)
     or2.pin('in1').link(jogActive)
     or2.pin('out').link(jogEnable)
 
@@ -80,7 +88,7 @@ def velocity_jog(thread):
     reset = rt.newinst('reset', 'reset.extruder-en1')
     hal.addf(reset.name, thread)
     reset.pin('rising').set(True)
-    reset.pin('falling').set(True)
+    reset.pin('falling').set(False)
     reset.pin('retriggerable').set(True)
     reset.pin('reset-bit').set(False)
     reset.pin('trigger').link(jogTrigger)
@@ -92,18 +100,22 @@ def velocity_jog(thread):
     reset.pin('falling').set(False)
     reset.pin('retriggerable').set(True)
     reset.pin('reset-bit').set(False)
-    reset.pin('trigger').link(jogContinous)
+    reset.pin('trigger').link(jogContinuous)
     reset.pin('out-bit').link(extruderEn)
 
-    rcomps.create_ve_jog_rcomp()
+    rcomps.create_ve_jog_rcomp(extruders=extruders)
 
 
-def velocity_extrusion(thread):
+def velocity_extrusion(extruders, thread):
+    ''' Velocity extrusion support '''
     # from motion/ui
     xvel = hal.newsig('ve-xvel', hal.HAL_FLOAT)
     yvel = hal.newsig('ve-yvel', hal.HAL_FLOAT)
     zvel = hal.newsig('ve-zvel', hal.HAL_FLOAT)
     crossSection = hal.newsig('ve-cross-section', hal.HAL_FLOAT)
+    crossSectionIn = hal.newsig('ve-cross-section-in', hal.HAL_FLOAT)
+    lineWidth = hal.newsig('ve-line-width', hal.HAL_FLOAT)
+    lineHeight = hal.newsig('ve-line-height', hal.HAL_FLOAT)
     filamentDia = hal.newsig('ve-filament-dia', hal.HAL_FLOAT)
     extrudeScale = hal.newsig('ve-extrude-scale', hal.HAL_FLOAT)
     extrudeAccelAdjGain = hal.newsig('ve-extrude-accel-adj-gain', hal.HAL_FLOAT)
@@ -144,6 +156,17 @@ def velocity_extrusion(thread):
     hal.addf(absComp.name, thread)
     absComp.pin('in').link(nozzleVelSigned)
     absComp.pin('out').link(nozzleVel)
+
+    mult2 = rt.newinst('mult2', 'mult2.ve-cross-section')
+    hal.addf(mult2.name, thread)
+    mult2.pin('in0').link(lineWidth)
+    mult2.pin('in1').link(lineHeight)
+    mult2.pin('out').link(crossSectionIn)
+
+    outToIo = rt.newinst('out_to_io', 'out-to-io.ve-cross-section')
+    hal.addf(outToIo.name, thread)
+    outToIo.pin('in-float').link(crossSectionIn)
+    outToIo.pin('out-float').link(crossSection)
 
     # multiply area with speed and we get discharge (mm^3 per second)
     mult2 = rt.newinst('mult2', 'mult2.ve-nozzle-discharge')
@@ -234,7 +257,7 @@ def velocity_extrusion(thread):
     retract += 'motion.feed-hold'  # stop motion until retract/unretract finished
 
     # jogging needs to be inserted here
-    velocity_jog(thread)
+    velocity_jog(extruders, thread)
 
     # now the solution of Andy Pugh for automatically retracting/priming
     #00 = motion without extrusion, jog
@@ -251,16 +274,28 @@ def velocity_extrusion(thread):
     mux4.pin('sel0').link(retract)
     mux4.pin('sel1').link(extruderEn)
 
-    # default values
-    retractLen.set(c.find('EXTRUDER_0', 'RETRACT_LEN'))
-    retractVel.set(c.find('EXTRUDER_0', 'RETRACT_VEL'))
-    filamentDia.set(c.find('EXTRUDER_0', 'FILAMENT_DIA'))
-    maxVelocity.set(c.find('EXTRUDER_0', 'MAX_VELOCITY'))  # TODO shoud be on a per Extruder base
+    sections = [[retractLen, 'RETRACT_LEN'],
+                [retractVel, 'RETRACT_VEL'],
+                [filamentDia, 'FILAMENT_DIA'],
+                [maxVelocity, 'MAX_VELOCITY'],
+                [extrudeScale, 'EXTRUDE_SCALE']]
+
+    for section in sections:
+        ioMux = rt.newinst('io_muxn',
+                           'io-mux%i.%s' % (extruders, section[0].name),
+                           pincount=extruders)
+        hal.addf(ioMux.name, thread)
+        ioMux.pin('out').link(section[0])
+        ioMux.pin('sel').link('extruder-sel')
+        for n in range(0, extruders):
+            signal = hal.newsig('%s-e%i' % (section[0].name, n), hal.HAL_FLOAT)
+            ioMux.pin('in%i' % n).link(signal)
+            signal.set(c.find('EXTRUDER_%i' % n, section[1]))
+
     extrudeAccelAdjGain.set(0.05)
-    extrudeScale.set(1.0)
     if baseVel.writers < 1:  # can only write when jogging not configured
         baseVel.set(0.0)
 
     rcomps.create_ve_params_rcomp()
-    storage.setup_ve_storage()
+    storage.setup_ve_storage(extruders=extruders)
     motion.setup_ve_io()
