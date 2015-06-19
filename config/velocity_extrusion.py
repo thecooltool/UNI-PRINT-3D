@@ -13,6 +13,7 @@ def velocity_jog(extruders, thread):
     ''' Velocity extruding jog support '''
     # from ui
     jogVelocity = hal.newsig('ve-jog-velocity', hal.HAL_FLOAT)
+    jogVelocityLimited = hal.newsig('ve-jog-velocity-limited', hal.HAL_FLOAT)
     jogDirection = hal.newsig('ve-jog-direction', hal.HAL_BIT)
     jogDistance = hal.newsig('ve-jog-distance', hal.HAL_FLOAT)
     jogTrigger = hal.newsig('ve-jog-trigger', hal.HAL_BIT)
@@ -25,18 +26,26 @@ def velocity_jog(extruders, thread):
     jogTime = hal.newsig('ve-jog-time', hal.HAL_FLOAT)
     jogTimeLeft = hal.newsig('ve-jog-time-left', hal.HAL_FLOAT)
     jogActive = hal.newsig('ve-jog-active', hal.HAL_BIT)
+    maxVelocity = hal.Signal('ve-max-velocity', hal.HAL_FLOAT)
 
     baseVel = hal.Signal('ve-base-vel')
     extruderEn = hal.Signal('ve-extruder-en')
 
+    limit1 = rt.newinst('limit1', 'limit1.ve-jog-velocity-limited')
+    hal.addf(limit1.name, thread)
+    limit1.pin('in').link(jogVelocity)
+    limit1.pin('out').link(jogVelocityLimited)
+    limit1.pin('min').set(0.01)  # prevent users from setting 0 as jog velocity
+    limit1.pin('max').link(maxVelocity)
+
     neg = rt.newinst('neg', 'neg.ve-jog-velocity-neg')
     hal.addf(neg.name, thread)
-    neg.pin('in').link(jogVelocity)
+    neg.pin('in').link(jogVelocityLimited)
     neg.pin('out').link(jogVelocityNeg)
 
     mux2 = rt.newinst('mux2', 'mux2.ve-jog-velocity-signed')
     hal.addf(mux2.name, thread)
-    mux2.pin('in0').link(jogVelocity)
+    mux2.pin('in0').link(jogVelocityLimited)
     mux2.pin('in1').link(jogVelocityNeg)
     mux2.pin('sel').link(jogDirection)
     mux2.pin('out').link(jogVelocitySigned)
@@ -44,7 +53,7 @@ def velocity_jog(extruders, thread):
     div2 = rt.newinst('div2', 'div2.ve-jog-time')
     hal.addf(div2.name, thread)
     div2.pin('in0').link(jogDistance)
-    div2.pin('in1').link(jogVelocity)
+    div2.pin('in1').link(jogVelocityLimited)
     div2.pin('out').link(jogTime)
 
     oneshot = rt.newinst('oneshot', 'oneshot.ve-jog-active')
@@ -80,7 +89,7 @@ def velocity_jog(extruders, thread):
 
     mult2 = rt.newinst('mult2', 'mult2.ve-jog-dtg')
     hal.addf(mult2.name, thread)
-    mult2.pin('in0').link(jogVelocity)
+    mult2.pin('in0').link(jogVelocityLimited)
     mult2.pin('in1').link(jogTimeLeft)
     mult2.pin('out').link(jogDtg)
 
