@@ -109,9 +109,6 @@ def velocity_jog(extruders, thread):
 def velocity_extrusion(extruders, thread):
     ''' Velocity extrusion support '''
     # from motion/ui
-    xvel = hal.newsig('ve-xvel', hal.HAL_FLOAT)
-    yvel = hal.newsig('ve-yvel', hal.HAL_FLOAT)
-    zvel = hal.newsig('ve-zvel', hal.HAL_FLOAT)
     crossSection = hal.newsig('ve-cross-section', hal.HAL_FLOAT)
     crossSectionIn = hal.newsig('ve-cross-section-in', hal.HAL_FLOAT)
     lineWidth = hal.newsig('ve-line-width', hal.HAL_FLOAT)
@@ -123,7 +120,6 @@ def velocity_extrusion(extruders, thread):
     retractLen = hal.newsig('ve-retract-len', hal.HAL_FLOAT)
     maxVelocity = hal.newsig('ve-max-velocity', hal.HAL_FLOAT)
     # helper signals
-    nozzleVelSigned = hal.newsig('ve-nozzle-vel-signed', hal.HAL_FLOAT)
     nozzleVel = hal.newsig('ve-nozzle-vel', hal.HAL_FLOAT)
     nozzleDischarge = hal.newsig('ve-nozzle-discharge', hal.HAL_FLOAT)
     filamentDiaSquared = hal.newsig('ve-filament-dia-squared', hal.HAL_FLOAT)
@@ -140,22 +136,7 @@ def velocity_extrusion(extruders, thread):
     extrudeVel = hal.newsig('ve-extrude-vel', hal.HAL_FLOAT)
     baseVel = hal.newsig('ve-base-vel', hal.HAL_FLOAT)
 
-    # take all the actual speeds from the axes and calculate resulting speed.
-    xvel += 'axis.0.joint-vel-cmd'
-    yvel += 'axis.1.joint-vel-cmd'
-    zvel += 'axis.2.joint-vel-cmd'
-
-    hypot = rt.newinst('hypot', 'hypot.ve-nozze-vel')
-    hal.addf(hypot.name, thread)
-    hypot.pin('in0').link(xvel)
-    hypot.pin('in1').link(yvel)
-    hypot.pin('in2').link(zvel)
-    hypot.pin('out').link(nozzleVelSigned)
-
-    absComp = rt.newinst('abs', 'abs.ve-nozzle-vel')
-    hal.addf(absComp.name, thread)
-    absComp.pin('in').link(nozzleVelSigned)
-    absComp.pin('out').link(nozzleVel)
+    nozzleVel.link('motion.current-vel')
 
     mult2 = rt.newinst('mult2', 'mult2.ve-cross-section')
     hal.addf(mult2.name, thread)
