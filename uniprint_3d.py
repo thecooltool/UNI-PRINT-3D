@@ -26,8 +26,13 @@ hardware.hardware_read()
 base.gantry_read(gantryAxis=2, thread='servo-thread')
 hal.addf('motion-command-handler', 'servo-thread')
 
+numFans = c.find('FDM', 'NUM_FANS')
+numExtruders = c.find('FDM', 'NUM_EXTRUDERS')
+numLights = c.find('FDM', 'NUM_LIGHTS')
+withAbp = c.find('FDM', 'ABP', False)
+
 # Axis-of-motion Specific Configs (not the GUI)
-ve.velocity_extrusion('servo-thread')
+ve.velocity_extrusion(extruders=numExtruders, thread='servo-thread')
 # X [0] Axis
 base.setup_stepper(section='AXIS_0', axisIndex=0, stepgenIndex=0)
 # Y [1] Axis
@@ -39,11 +44,6 @@ base.setup_stepper(section='AXIS_2', axisIndex=2, stepgenIndex=3,
             gantry=True, gantryJoint=1)
 # Extruder, velocity controlled
 base.setup_stepper(section='EXTRUDER_0', stepgenIndex=4, velocitySignal='ve-extrude-vel')
-
-numFans = c.find('FDM', 'NUM_FANS')
-numExtruders = c.find('FDM', 'NUM_EXTRUDERS')
-numLights = c.find('FDM', 'NUM_LIGHTS')
-withAbp = c.find('FDM', 'ABP', False)
 
 # Extruder Multiplexer
 base.setup_extruder_multiplexer(extruders=(numExtruders + int(withAbp)), thread='servo-thread')
