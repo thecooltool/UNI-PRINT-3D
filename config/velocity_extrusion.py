@@ -31,6 +31,17 @@ def velocity_jog(extruders, thread):
     baseVel = hal.Signal('ve-base-vel')
     extruderEn = hal.Signal('ve-extruder-en')
 
+    # multiplexing jog velocity for multiple extruders
+    ioMux = rt.newinst('io_muxn',
+                       'io-mux%i.ve-jog-velocity' % extruders,
+                       pincount=extruders)
+    hal.addf(ioMux.name, thread)
+    ioMux.pin('out').link(jogVelocity)
+    ioMux.pin('sel').link('extruder-sel')
+    for n in range(0, extruders):
+        signal = hal.newsig('ve-jog-velocity-e%i' % n, hal.HAL_FLOAT)
+        ioMux.pin('in%i' % n).link(signal)
+
     limit1 = rt.newinst('limit1', 'limit1.ve-jog-velocity-limited')
     hal.addf(limit1.name, thread)
     limit1.pin('in').link(jogVelocity)
