@@ -389,6 +389,9 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
 
         hal.Signal('%s-pwm' % hotendFan).set(1.0)
 
+    rcomps.create_temperature_rcomp(name)
+    motion.setup_temperature_io(name)
+
     # init parameter signals
     tempLimitMin.set(c.find(section, 'TEMP_LIMIT_MIN'))
     tempLimitMax.set(c.find(section, 'TEMP_LIMIT_MAX'))
@@ -399,9 +402,6 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     tempPidDgain.set(c.find(section, 'PID_DGAIN'))
     tempPidMaxerrorI.set(c.find(section, 'PID_MAXERRORI'))
     tempPidBias.set(c.find(section, 'PID_BIAS'))
-
-    rcomps.create_temperature_rcomp(name)
-    motion.setup_temperature_io(name)
 
 
 def setup_extruder_multiplexer(extruders, thread):
