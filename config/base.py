@@ -7,18 +7,6 @@ import storage
 import motion
 
 
-def setup_motion():
-    rt.loadrt('trivkins')
-    rt.loadrt('tp')
-
-    # motion controller, get name and thread periods from ini file
-    rt.loadrt(c.find('EMCMOT', 'EMCMOT'),
-              servo_period_nsec=c.find('EMCMOT', 'SERVO_PERIOD'),
-              num_joints=c.find('TRAJ', 'AXES'),
-              num_aio=51,
-              num_dio=21)
-
-
 def usrcomp_status(compname, signame, thread, resetSignal='estop-reset'):
     sigIn = hal.newsig('%s-error-in' % signame, hal.HAL_BIT)
     sigOut = hal.newsig('%s-error' % signame, hal.HAL_BIT)

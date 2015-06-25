@@ -1,3 +1,4 @@
+# HAL file for BeagleBone + TCT paralell port cape with 5 steppers and 3D printer board
 import os
 
 from machinekit import rtapi as rt
@@ -7,14 +8,15 @@ from machinekit import config as c
 from config import velocity_extrusion as ve
 from config import base
 from config import storage
+from config import motion
 import hardware
 
-
-# HAL file for BeagleBone + TCT paralell port cape with 5 steppers and 3D printer board
+# initialize the RTAPI command client
 rt.init_RTAPI()
+# loads the ini file passed by linuxcnc
 c.load_ini(os.environ['INI_FILE_NAME'])
 
-base.setup_motion()
+motion.setup_motion()
 hardware.init_hardware()
 storage.init_storage('storage.ini')
 
