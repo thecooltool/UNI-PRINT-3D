@@ -37,31 +37,37 @@
  ******************************************************************************/
 
 component led_dim "LinuxCNC HAL component for dimming LEDs";
-pin in  u32   steps "Input steps";
-pin in  u32   max_pwm "PWM steps (usually 2^n)";
-pin in  float factor "The dim factor";
-pin in  float input "Input value -> 0 to 1";
-pin out float output "Output value -> 0 to 1";
+pin in  float in "Brightness input value -> 0 to 1";
+pin out float out "Luminance output value -> 0 to 1";
 function _  fp "Update the output value";
 description """
-Component for dimming LEDs
+Component for LED dimming according to human perception of brightness of light.
 .LP
-The output value can be tuned using the the factor input
+The output is calculated using the CIE 1931 formula.
 """;
 license "GPL";
-variable hal_float_t basis = 1.0;
-variable hal_float_t lastInput = 0.0;
+variable hal_float_t last_in = 0.0;
 ;;
 #include <rtapi_math.h>
+#define MIN(x,y) (x < y ? x : y)
 
 FUNCTION(_) {
-    hal_float_t value;
-    if (lastInput != input)
+    if (last_in != in)
     {
-        basis = rtapi_pow((hal_float_t)max_pwm/factor, 1.0 / (hal_float_t)(steps-1));
-        value = (factor * rtapi_pow(basis, input * (hal_float_t)steps)) / ((hal_float_t)(max_pwm));
-        output = (value > 1.0) ? 1.0 : value;
-        lastInput = input;
+        hal_float_t input = MIN(MAX(in, 0.0), 1.0); // clamp to 0.0, 1.0
+
+        // luminance calculation based on CIE 1931 formula
+        // see http://forum.arduino.cc/index.php/topic,147810.0.html
+        if (input < 0.079996)
+        {
+            out = input / 9.033;
+        }
+        else
+        {
+            out = rtapi_pow((input + 0.16) / 1.16, 3.0);
+        }
+
+        last_in = in;
     }
 
     return 0;

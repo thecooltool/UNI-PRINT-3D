@@ -411,11 +411,8 @@ def setup_light(name, thread):
 
         ledDim = rt.newinst('led_dim', 'led-dim.%s-%s' % (name, color))
         hal.addf(ledDim.name, thread)
-        ledDim.pin('input').link(inSig)
-        ledDim.pin('output').link(outSig)
-        ledDim.pin('factor').set(5.0)
-        ledDim.pin('steps').set(256)
-        ledDim.pin('max-pwm').set(4095)
+        ledDim.pin('in').link(inSig)
+        ledDim.pin('out').link(outSig)
 
     rcomps.create_light_rcomp(name)
     storage.setup_light_storage(name)
