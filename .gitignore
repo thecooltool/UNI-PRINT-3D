@@ -3,3 +3,5 @@
 ~*
 *~
 .directory
+*.pyc
+startup.ini
