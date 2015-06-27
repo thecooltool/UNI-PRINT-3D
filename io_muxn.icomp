@@ -8,10 +8,9 @@ variable hal_s32_t last_sel = -1; // will apply input to output on start-up
 variable hal_float_t last_in = 0.0;
 variable hal_float_t last_out = 0.0;
 
-instanceparam int pincount = 8;
+instanceparam int pincount = 2;
 
 option MAXCOUNT 16;
-option DEFAULTCOUNT 2;
 
 function _;
 license "GPL";
