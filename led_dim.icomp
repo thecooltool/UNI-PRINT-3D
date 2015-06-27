@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright (C) 2014 Alexander Rössler
+ * Copyright (C) 2015 Alexander Rössler
  *
  *
  * This module allows dimming LEDs using HAL
@@ -35,7 +35,6 @@
  * information, go to www.linuxcnc.org.
  *
  ******************************************************************************/
-
 component led_dim "LinuxCNC HAL component for dimming LEDs";
 pin in  float in "Brightness input value -> 0 to 1";
 pin out float out "Luminance output value -> 0 to 1";
