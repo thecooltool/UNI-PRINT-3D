@@ -14,12 +14,13 @@ def usrcomp_status(compname, signame, thread, resetSignal='estop-reset'):
 
     sigIn.link('%s.error' % compname)
 
-    logicFuse = rt.newinst('logic_fuse', 'logic-fuse.%s-error' % signame)
-    hal.addf(logicFuse.name, thread)
-    logicFuse.pin('in').link(sigIn)
-    logicFuse.pin('out').link(sigOut)
-    logicFuse.pin('reset').link(resetSignal)
-    logicFuse.pin('wait').set(0.5)  # TODO replace by better component
+    safetyLatch = rt.newinst('safety_latch', 'safety-latch.%s-error' % signame)
+    hal.addf(safetyLatch.name, thread)
+    safetyLatch.pin('error-in').link(sigIn)
+    safetyLatch.pin('error-out').link(sigOut)
+    safetyLatch.pin('reset').link(resetSignal)
+    safetyLatch.pin('threshold').set(500)  # 500ms error
+    safetyLatch.pin('latching').set(True)
 
     notComp = rt.newinst('not', 'not.%s-no-error' % signame)
     hal.addf(notComp.name, thread)
@@ -345,12 +346,13 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     notComp.pin('in').link(noErrorIn)
     notComp.pin('out').link(errorIn)
 
-    logicFuse = rt.newinst('logic_fuse', 'logic-fuse.%s-error' % name)
-    hal.addf(logicFuse.name, thread)
-    logicFuse.pin('in').link(errorIn)
-    logicFuse.pin('out').link(error)
-    logicFuse.pin('wait').set(0.5)  # TODO configure
-    logicFuse.pin('reset').link('estop-reset')
+    safetyLatch = rt.newinst('safety_latch', 'safety-latch.%s-error' % name)
+    hal.addf(safetyLatch.name, thread)
+    safetyLatch.pin('error-in').link(errorIn)
+    safetyLatch.pin('error-out').link(error)
+    safetyLatch.pin('reset').link('estop-reset')
+    safetyLatch.pin('threshold').set(500)  # 500ms error
+    safetyLatch.pin('latching').set(True)
 
     # active chain
     comp = rt.newinst('comp', 'comp.%s-active' % name)

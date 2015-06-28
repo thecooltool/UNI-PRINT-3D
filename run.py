@@ -52,7 +52,7 @@ try:
     launcher.load_bbio_file('paralell_cape3.bbio')
     launcher.install_comp('thermistor_check.icomp')
     launcher.install_comp('led_dim.icomp')
-    launcher.install_comp('logic_fuse.icomp')
+    launcher.install_comp('safety_latch.icomp')
     launcher.install_comp('io_muxn.icomp')
     cfg = configparser.ConfigParser({'NAME': ''})
     cfg.read(startupIniName)
