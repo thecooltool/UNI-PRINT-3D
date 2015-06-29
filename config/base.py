@@ -397,11 +397,12 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
 def setup_extruder_multiplexer(extruders, thread):
     extruderSel = hal.Signal('extruder-sel', hal.HAL_S32)
 
-    select8 = rt.newinst('select8', 'select8.extruder-sel')
-    hal.addf(select8.name, thread)
+    select = rt.newinst('selectn', 'select%i.extruder-sel' % extruders,
+                        pincount=extruders)
+    hal.addf(select.name, thread)
     for n in range(0, extruders):
-        select8.pin('out%i' % n).link('e%i-enable' % n)
-    select8.pin('sel').link(extruderSel)
+        select.pin('out%i' % n).link('e%i-enable' % n)
+    select.pin('sel').link(extruderSel)
 
     extruderSel.link('iocontrol.0.tool-prep-number')  # driven by T code
 
