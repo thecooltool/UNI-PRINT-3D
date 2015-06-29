@@ -74,6 +74,7 @@ def init_hardware():
 
 def setup_hardware(thread):
     # PWM
+    hal.Pin('i2c-pwm.frequency').set(100)  # 100Hz, keeps EMC radiation low
     # HBP
     hal.Pin('i2c-pwm.out-00.enable').set(True)
     hal.Pin('i2c-pwm.out-00.value').link('hbp-temp-pwm')
