@@ -1,0 +1,10 @@
+* Uni-Print-3D Machinekit configuration
+
+This repository contains the Machinekit configuration for the
+[[http://www.thecooltool.com/en/products/uni-print-3d/][Uni-Print-3D 3D printer]] from The Cool Tool. This configuration is
+dedicated to run on the [[http://www.thecooltool.com/en/accessories/details/sandybox/][SandyBox mini computer]].
+
+#+CAPTION: CD4046B Block Diagramm
+#+NAME:   fig:cd4046
+#+name: fig:cd4046
+[[./images/Uni-Print-3D.jpg]]
