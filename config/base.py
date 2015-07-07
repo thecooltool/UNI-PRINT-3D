@@ -250,6 +250,15 @@ def create_temperature_control(name, section, thread, hardwareOkSignal=None,
     noErrorIn = hal.newsig('%s-no-error-in' % name, hal.HAL_BIT)
     errorIn = hal.newsig('%s-error-in' % name, hal.HAL_BIT)
 
+    # reset set temperature when estop is cleared
+    reset = rt.newinst('reset', 'reset.%s-temp-set' % name)
+    hal.addf(reset.name, thread)
+    reset.pin('reset-float').set(0.0)
+    reset.pin('out-float').link(tempSet)
+    reset.pin('rising').set(True)
+    reset.pin('falling').set(False)
+    reset.pin('trigger').link('estop-reset')
+
     tempPidBiasOut = tempPidBias
     # coolingFan compensation
     if coolingFan:
@@ -426,6 +435,15 @@ def setup_fan(name, thread):
     setSig = hal.newsig('%s-set' % name, hal.HAL_FLOAT)
     pwmSig = hal.newsig('%s-pwm' % name, hal.HAL_FLOAT)
     enable = hal.newsig('%s-enable' % name, hal.HAL_BIT)
+
+    # reset fan when estop is cleared
+    reset = rt.newinst('reset', 'reset.%s-set' % name)
+    hal.addf(reset.name, thread)
+    reset.pin('reset-float').set(0.0)
+    reset.pin('out-float').link(setSig)
+    reset.pin('rising').set(True)
+    reset.pin('falling').set(False)
+    reset.pin('trigger').link('estop-reset')
 
     scale = rt.newinst('scale', 'scale.%s' % name)
     hal.addf(scale.name, thread)
