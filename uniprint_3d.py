@@ -5,10 +5,10 @@ from machinekit import rtapi as rt
 from machinekit import hal
 from machinekit import config as c
 
-from config import velocity_extrusion as ve
-from config import base
-from config import storage
-from config import motion
+from fdm.config import velocity_extrusion as ve
+from fdm.config import base
+from fdm.config import storage
+from fdm.config import motion
 import hardware
 
 # initialize the RTAPI command client
