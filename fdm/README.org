@@ -1,0 +1,7 @@
+* Machinekit FDM
+
+  Modular configuration base for Machinekit FDM 3D printers.
+
+  The primary goal of this repository is to work on a common base for
+  Machinekit based FDM 3D printers. This repository should simplify
+  the process of creating new device configurations.
