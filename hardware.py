@@ -188,7 +188,7 @@ def setup_hardware(thread):
     # Tie machine power signal to the Parport Cape LED
     # Feel free to tie any other signal you like to the LED
     hal.Pin('bb_gpio.p8.out-26').link('emcmot-0-enable')
-    # hal.Pin('bb_gpio.p8.out-26.invert').set(True)
+    hal.Pin('bb_gpio.p8.out-26.invert').set(True)
 
     # link emcmot.xx.enable to stepper driver enable signals
 

@@ -14,7 +14,7 @@ P8_16 low #YStep
 P8_17 default
 P8_18 default
 P8_19 high #Estop_Sw
-P8_26 low #STATUS_LED
+P8_26 high #STATUS_LED
 P9_11 low #BStep
 P9_12 default
 P9_13 low #ZStep
