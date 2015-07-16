@@ -103,8 +103,8 @@ def setup_hardware(thread):
     # GPIO
     hal.Pin('i2c-gpio.A.in-00').link('limit-0-home')    # X
     hal.Pin('i2c-gpio.A.in-01').link('limit-1-home')    # Y
-    hal.Pin('i2c-gpio.A.in-02').link('limit-2-0-home')  # ZR
-    hal.Pin('i2c-gpio.A.in-03').link('limit-2-1-home')  # ZL
+    hal.Pin('i2c-gpio.A.in-02').link('limit-2-1-home')  # ZR
+    hal.Pin('i2c-gpio.A.in-03').link('limit-2-0-home')  # ZL
     hal.Pin('i2c-gpio.A.in-04').link('probe-signal')
     # hal.Pin('i2c-gpio.A.in-05').link('sensor1')
     # hal.Pin('i2c-gpio.A.in-06').link('sensor1')
@@ -159,16 +159,16 @@ def setup_hardware(thread):
     #hal.Pin('i2c-temp.ch-07.value').link('ain2')
 
     # Stepper
-    hal.Pin('hpg.stepgen.00.steppin').set(812)
-    hal.Pin('hpg.stepgen.00.dirpin').set(811)
-    hal.Pin('hpg.stepgen.01.steppin').set(816)
-    hal.Pin('hpg.stepgen.01.dirpin').set(815)
-    hal.Pin('hpg.stepgen.02.steppin').set(913)
-    hal.Pin('hpg.stepgen.02.dirpin').set(925)
-    hal.Pin('hpg.stepgen.03.steppin').set(922)
-    hal.Pin('hpg.stepgen.03.dirpin').set(921)
-    hal.Pin('hpg.stepgen.04.steppin').set(911)
-    hal.Pin('hpg.stepgen.04.dirpin').set(942)
+    hal.Pin('hpg.stepgen.00.steppin').set(812)  # XStep
+    hal.Pin('hpg.stepgen.00.dirpin').set(811)   # XDir
+    hal.Pin('hpg.stepgen.01.steppin').set(816)  # YStep
+    hal.Pin('hpg.stepgen.01.dirpin').set(815)   # YDir
+    hal.Pin('hpg.stepgen.02.steppin').set(922)  # AStep - ZL
+    hal.Pin('hpg.stepgen.02.dirpin').set(921)   # ADir
+    hal.Pin('hpg.stepgen.03.steppin').set(913)  # ZStep - ZR
+    hal.Pin('hpg.stepgen.03.dirpin').set(925)   # ZDir
+    hal.Pin('hpg.stepgen.04.steppin').set(911)  # BStep
+    hal.Pin('hpg.stepgen.04.dirpin').set(942)   # BDir
 
     # charge pump
     chargePump = rt.loadrt('charge_pump')
