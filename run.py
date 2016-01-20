@@ -50,7 +50,7 @@ try:
     launcher.check_installation()
     launcher.cleanup_session()
     launcher.load_bbio_file('paralell_cape3.bbio')
-    launcher.install_comp('thermistor_check.icomp')
+    # launcher.install_comp('thermistor_check.icomp')
     cfg = configparser.ConfigParser({'NAME': ''})
     cfg.read(startupIniName)
     machineName = cfg.get('EMC', 'NAME')
